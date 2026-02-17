@@ -1,8 +1,12 @@
 import L from 'leaflet';
+import maplibregl from 'maplibre-gl';
 import { updateState } from '../core/state.js';
 
 let map = null;
 let tileLayer = null;
+let artisticMap = null;
+let currentArtisticThemeName = null;
+let isSyncing = false;
 
 export function initMap(containerId, initialCenter, initialZoom, initialTileUrl) {
 	map = L.map(containerId, {
@@ -18,15 +22,158 @@ export function initMap(containerId, initialCenter, initialZoom, initialTileUrl)
 	}).addTo(map);
 
 	map.on('moveend', () => {
+		if (isSyncing) return;
+		isSyncing = true;
+
 		const center = map.getCenter();
+		const zoom = map.getZoom();
 		updateState({
 			lat: center.lat,
 			lon: center.lng,
-			zoom: map.getZoom()
+			zoom: zoom
 		});
+
+		if (artisticMap) {
+			artisticMap.jumpTo({
+				center: [center.lng, center.lat],
+				zoom: zoom - 1
+			});
+		}
+
+		isSyncing = false;
 	});
 
+	// Init Artistic Map (hidden initially)
+	initArtisticMap('artistic-map', [initialCenter[1], initialCenter[0]], initialZoom - 1);
+
 	return map;
+}
+
+function initArtisticMap(containerId, center, zoom) {
+	artisticMap = new maplibregl.Map({
+		container: containerId,
+		style: { version: 8, sources: {}, layers: [] }, // Empty initially
+		center: center,
+		zoom: zoom,
+		interactive: true, // Enable interactivity
+		attributionControl: false,
+		preserveDrawingBuffer: true // Required for exporting to PNG
+	});
+
+	// Handle zoom when scrolling over artistic map (center zoom)
+	artisticMap.scrollZoom.setWheelZoomRate(1);
+	artisticMap.scrollZoom.setZoomRate(1/600);
+
+	artisticMap.on('moveend', () => {
+		if (isSyncing) return;
+		isSyncing = true;
+
+		const center = artisticMap.getCenter();
+		const zoom = artisticMap.getZoom();
+		
+		updateState({
+			lat: center.lat,
+			lon: center.lng,
+			zoom: zoom + 1 
+		});
+
+		if (map) {
+			map.setView([center.lat, center.lng], zoom + 1, { animate: false });
+		}
+
+		isSyncing = false;
+	});
+}
+
+export function updateArtisticStyle(theme) {
+	if (!artisticMap) return;
+	if (currentArtisticThemeName === theme.name) return;
+
+	currentArtisticThemeName = theme.name;
+	const style = generateMapLibreStyle(theme);
+	artisticMap.setStyle(style);
+}
+
+function generateMapLibreStyle(theme) {
+	return {
+		version: 8,
+		names: theme.name,
+		sources: {
+			openfreemap: {
+				type: 'vector',
+				url: 'https://tiles.openfreemap.org/planet'
+			}
+		},
+		layers: [
+			{
+				id: 'background',
+				type: 'background',
+				paint: { 'background-color': theme.bg }
+			},
+			{
+				id: 'water',
+				source: 'openfreemap',
+				'source-layer': 'water',
+				type: 'fill',
+				paint: { 'fill-color': theme.water }
+			},
+			{
+				id: 'park',
+				source: 'openfreemap',
+				'source-layer': 'park',
+				type: 'fill',
+				paint: { 'fill-color': theme.parks }
+			},
+			{
+				id: 'road-default',
+				source: 'openfreemap',
+				'source-layer': 'transportation',
+				type: 'line',
+				filter: ['!', ['match', ['get', 'class'], ['motorway', 'primary', 'secondary', 'tertiary', 'residential'], true, false]],
+				paint: { 'line-color': theme.road_default, 'line-width': 0.5 }
+			},
+			{
+				id: 'road-residential',
+				source: 'openfreemap',
+				'source-layer': 'transportation',
+				type: 'line',
+				filter: ['==', ['get', 'class'], 'residential'],
+				paint: { 'line-color': theme.road_residential, 'line-width': 0.5 }
+			},
+			{
+				id: 'road-tertiary',
+				source: 'openfreemap',
+				'source-layer': 'transportation',
+				type: 'line',
+				filter: ['==', ['get', 'class'], 'tertiary'],
+				paint: { 'line-color': theme.road_tertiary, 'line-width': 0.8 }
+			},
+			{
+				id: 'road-secondary',
+				source: 'openfreemap',
+				'source-layer': 'transportation',
+				type: 'line',
+				filter: ['==', ['get', 'class'], 'secondary'],
+				paint: { 'line-color': theme.road_secondary, 'line-width': 1.0 }
+			},
+			{
+				id: 'road-primary',
+				source: 'openfreemap',
+				'source-layer': 'transportation',
+				type: 'line',
+				filter: ['==', ['get', 'class'], 'primary'],
+				paint: { 'line-color': theme.road_primary, 'line-width': 1.5 }
+			},
+			{
+				id: 'road-motorway',
+				source: 'openfreemap',
+				'source-layer': 'transportation',
+				type: 'line',
+				filter: ['==', ['get', 'class'], 'motorway'],
+				paint: { 'line-color': theme.road_motorway, 'line-width': 2.0 }
+			}
+		]
+	};
 }
 
 export function updateMapPosition(lat, lon, zoom, options = { animate: true }) {
@@ -73,6 +220,9 @@ export function getMapInstance() {
 
 export function invalidateMapSize() {
 	if (map) {
-		map.invalidateSize();
+		map.invalidateSize({ animate: false });
+	}
+	if (artisticMap) {
+		artisticMap.resize();
 	}
 }

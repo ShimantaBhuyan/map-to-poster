@@ -1,5 +1,5 @@
-import { state, updateState, getSelectedTheme } from '../core/state.js';
-import { updateMapPosition, invalidateMapSize } from '../map/map-init.js';
+import { state, updateState, getSelectedTheme, getSelectedArtisticTheme } from '../core/state.js';
+import { updateMapPosition, invalidateMapSize, updateArtisticStyle } from '../map/map-init.js';
 import { searchLocation, formatCoords } from '../map/geocoder.js';
 
 export function setupControls() {
@@ -9,7 +9,16 @@ export function setupControls() {
 	const lonInput = document.getElementById('lon-input');
 	const zoomSlider = document.getElementById('zoom-slider');
 	const zoomValue = document.getElementById('zoom-value');
+
+	const modeTile = document.getElementById('mode-tile');
+	const modeArtistic = document.getElementById('mode-artistic');
+	const tileSettings = document.getElementById('tile-settings');
+	const artisticSettings = document.getElementById('artistic-settings');
+
 	const themeSelect = document.getElementById('theme-select');
+	const artisticThemeSelect = document.getElementById('artistic-theme-select');
+	const artisticDesc = document.getElementById('artistic-desc');
+
 	const labelsToggle = document.getElementById('show-labels-toggle');
 	const overlayToggle = document.getElementById('overlay-bg-toggle');
 	const customW = document.getElementById('custom-w');
@@ -73,8 +82,15 @@ export function setupControls() {
 		updateMapPosition(undefined, undefined, zoom);
 	});
 
+	modeTile.addEventListener('click', () => updateState({ renderMode: 'tile' }));
+	modeArtistic.addEventListener('click', () => updateState({ renderMode: 'artistic' }));
+
 	themeSelect.addEventListener('change', (e) => {
 		updateState({ theme: e.target.value });
+	});
+
+	artisticThemeSelect.addEventListener('change', (e) => {
+		updateState({ artisticTheme: e.target.value });
 	});
 
 	if (labelsToggle) {
@@ -105,7 +121,25 @@ export function setupControls() {
 		lonInput.value = currentState.lon.toFixed(6);
 		zoomSlider.value = currentState.zoom;
 		zoomValue.textContent = currentState.zoom;
+
+		if (currentState.renderMode === 'tile') {
+			modeTile.className = 'flex-1 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white shadow-sm';
+			modeArtistic.className = 'flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 hover:text-slate-900';
+			tileSettings.classList.remove('hidden');
+			artisticSettings.classList.add('hidden');
+		} else {
+			modeTile.className = 'flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 hover:text-slate-900';
+			modeArtistic.className = 'flex-1 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white shadow-sm';
+			tileSettings.classList.add('hidden');
+			artisticSettings.classList.remove('hidden');
+		}
+
 		themeSelect.value = currentState.theme;
+		artisticThemeSelect.value = currentState.artisticTheme;
+
+		const artisticTheme = getSelectedArtisticTheme();
+		artisticDesc.textContent = artisticTheme.description;
+
 		if (labelsToggle) labelsToggle.checked = !!currentState.showLabels;
 		if (overlayToggle) overlayToggle.checked = !!currentState.overlayBgEnabled;
 		customW.value = currentState.width;
@@ -126,6 +160,24 @@ export function updatePreviewStyles(currentState) {
 	const divider = document.getElementById('poster-divider');
 
 	const theme = getSelectedTheme();
+	const artisticTheme = getSelectedArtisticTheme();
+
+	const isArtistic = currentState.renderMode === 'artistic';
+	const mapPreview = document.getElementById('map-preview');
+	const artisticMapDiv = document.getElementById('artistic-map');
+
+	if (isArtistic) {
+		mapPreview.style.visibility = 'hidden';
+		artisticMapDiv.style.visibility = 'visible';
+		artisticMapDiv.style.pointerEvents = 'auto';
+		updateArtisticStyle(artisticTheme);
+	} else {
+		mapPreview.style.visibility = 'visible';
+		artisticMapDiv.style.visibility = 'hidden';
+		artisticMapDiv.style.pointerEvents = 'none';
+	}
+
+	const activeTheme = isArtistic ? artisticTheme : theme;
 
 	const sizeChanged = lastWidth !== currentState.width || lastHeight !== currentState.height;
 	lastWidth = currentState.width;
@@ -133,6 +185,7 @@ export function updatePreviewStyles(currentState) {
 
 	posterContainer.style.width = `${currentState.width}px`;
 	posterContainer.style.height = `${currentState.height}px`;
+	posterContainer.style.backgroundColor = activeTheme.bg || activeTheme.background;
 
 	const parent = posterScaler.parentElement;
 	const padding = 120;
@@ -146,20 +199,20 @@ export function updatePreviewStyles(currentState) {
 	posterScaler.style.transform = `scale(${scale})`;
 
 	displayCity.textContent = currentState.city;
-	displayCity.style.color = theme.textColor;
+	displayCity.style.color = activeTheme.text || activeTheme.textColor;
 	displayCoords.textContent = formatCoords(currentState.lat, currentState.lon);
-	displayCoords.style.color = theme.textColor;
+	displayCoords.style.color = activeTheme.text || activeTheme.textColor;
 
 	if (overlayBg) {
 		if (currentState.overlayBgEnabled) {
 			overlayBg.style.display = '';
-			overlayBg.style.backgroundColor = theme.overlayBg;
-			overlayBg.style.opacity = '0.9';
+			overlayBg.style.backgroundColor = activeTheme.overlayBg || activeTheme.background || activeTheme.bg;
+			overlayBg.style.opacity = isArtistic ? '0.7' : '0.9';
 		} else {
 			overlayBg.style.display = 'none';
 		}
 	}
-	if (divider) divider.style.backgroundColor = theme.textColor;
+	if (divider) divider.style.backgroundColor = activeTheme.text || activeTheme.textColor;
 
 	invalidateMapSize();
 

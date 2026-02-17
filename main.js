@@ -10,9 +10,11 @@ initMap('map-preview', [state.lat, state.lon], state.zoom, initialTheme.tileUrl)
 const syncUI = setupControls();
 
 subscribe((currentState) => {
-	const theme = getSelectedTheme();
-	const tileUrl = currentState.showLabels ? theme.tileUrl : theme.tileUrlNoLabels;
-	updateMapTheme(tileUrl);
+	if (currentState.renderMode === 'tile') {
+		const theme = getSelectedTheme();
+		const tileUrl = currentState.showLabels ? theme.tileUrl : theme.tileUrlNoLabels;
+		updateMapTheme(tileUrl);
+	}
 
 	updatePreviewStyles(currentState);
 

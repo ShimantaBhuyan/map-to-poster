@@ -1,4 +1,5 @@
 import { themes } from './themes.js';
+import { artisticThemes } from './artistic-themes.js';
 
 let observers = [];
 
@@ -15,6 +16,8 @@ export const state = {
 	isExporting: false,
 	overlayBgEnabled: true,
 	showLabels: true,
+	renderMode: 'tile',
+	artisticTheme: 'arctic_frost',
 };
 
 const SAVED_KEYS = [
@@ -26,7 +29,9 @@ const SAVED_KEYS = [
 	'width',
 	'height',
 	'overlayBgEnabled',
-	'showLabels'
+	'showLabels',
+	'renderMode',
+	'artisticTheme'
 ];
 
 function loadSettings() {
@@ -74,4 +79,8 @@ function notifyObservers() {
 
 export function getSelectedTheme() {
 	return themes[state.theme] || themes.minimal;
+}
+
+export function getSelectedArtisticTheme() {
+	return artisticThemes[state.artisticTheme] || artisticThemes.arctic_frost;
 }

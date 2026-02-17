@@ -8,6 +8,7 @@
 	<title>MapToPoster JS — Create Beautiful Map Art</title>
 
 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+	<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,700;1,700&family=Cormorant+Garamond:wght@600&display=swap" rel="stylesheet">
@@ -83,39 +84,70 @@
 				</div>
 
 				<div class="space-y-4">
-					<div>
-						<div class="flex justify-between items-center mb-2">
-							<span class="label-sm mb-0">Perspective Zoom</span>
-							<span id="zoom-value" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">12</span>
-						</div>
-						<input type="range" id="zoom-slider" min="1" max="18" step="1" class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+					<div class="bg-slate-100 p-1 rounded-xl flex">
+						<button id="mode-tile" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all">Standard</button>
+						<button id="mode-artistic" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all">Artistic</button>
 					</div>
 
-					<div>
-						<span class="label-sm">Color Theme</span>
-						<div class="relative">
-							<select id="theme-select" class="input-field appearance-none cursor-pointer">
-								<option value="minimal">Minimal White</option>
-								<option value="dark">Midnight Dark</option>
-								<option value="standard">Classic Street (OSM)</option>
-								<option value="voyager">Modern Voyager</option>
-								<option value="satellite">Satellite View</option>
-							</select>
-							<svg class="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-							</svg>
+					<div id="tile-settings" class="space-y-4">
+						<div>
+							<div class="flex justify-between items-center mb-2">
+								<span class="label-sm mb-0">Perspective Zoom</span>
+								<span id="zoom-value" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">12</span>
+							</div>
+							<input type="range" id="zoom-slider" min="1" max="18" step="1" class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
 						</div>
 
-						<div class="mt-3 space-y-2">
-							<label class="flex items-center space-x-2 cursor-pointer">
-								<input type="checkbox" id="show-labels-toggle" class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" checked />
-								<span class="label-sm mb-0 normal-case font-semibold text-slate-600">Show Place Labels</span>
-							</label>
-							<label class="flex items-center space-x-2 cursor-pointer">
-								<input type="checkbox" id="overlay-bg-toggle" class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" checked />
-								<span class="label-sm mb-0 normal-case font-semibold text-slate-600">Overlay Background</span>
-							</label>
+						<div>
+							<span class="label-sm">Color Theme</span>
+							<div class="relative">
+								<select id="theme-select" class="input-field appearance-none cursor-pointer">
+									<option value="minimal">Minimal White</option>
+									<option value="dark">Midnight Dark</option>
+									<option value="standard">Classic Street (OSM)</option>
+									<option value="voyager">Modern Voyager</option>
+									<option value="satellite">Satellite View</option>
+								</select>
+								<svg class="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+								</svg>
+							</div>
+
+							<div class="mt-3 space-y-2">
+								<label class="flex items-center space-x-2 cursor-pointer">
+									<input type="checkbox" id="show-labels-toggle" class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" checked />
+									<span class="label-sm mb-0 normal-case font-semibold text-slate-600">Show Place Labels</span>
+								</label>
+								<label class="flex items-center space-x-2 cursor-pointer">
+									<input type="checkbox" id="overlay-bg-toggle" class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" checked />
+									<span class="label-sm mb-0 normal-case font-semibold text-slate-600">Overlay Background</span>
+								</label>
+							</div>
 						</div>
+					</div>
+
+					<div id="artistic-settings" class="space-y-4 hidden">
+						<div>
+							<span class="label-sm">Artistic Theme</span>
+							<div class="relative">
+								<select id="artistic-theme-select" class="input-field appearance-none cursor-pointer">
+									<option value="arctic_frost">Arctic Frost</option>
+									<option value="volcanic_ash">Volcanic Ash</option>
+									<option value="emerald_valley">Emerald Valley</option>
+									<option value="golden_era">Golden Era</option>
+									<option value="cyber_glitch">Cyber Glitch</option>
+									<option value="rustic_clay">Rustic Clay</option>
+									<option value="deep_ocean">Deep Ocean</option>
+									<option value="monochrome_pro">Monochrome Pro</option>
+									<option value="lavender_mist">Lavender Mist</option>
+									<option value="autumn_whisper">Autumn Whisper</option>
+								</select>
+								<svg class="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+								</svg>
+							</div>
+						</div>
+						<p id="artistic-desc" class="text-[10px] text-slate-400 italic px-1"></p>
 					</div>
 				</div>
 			</div>
@@ -184,6 +216,7 @@
 		<div id="poster-scaler" class="transition-all duration-500 ease-out origin-center">
 			<div id="poster-container" class="relative bg-white shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] ring-1 ring-black/5 overflow-hidden">
 				<div id="map-preview" class="absolute inset-0 z-0 grayscale-[0.2]"></div>
+				<div id="artistic-map" class="absolute inset-0 z-[1]"></div>
 
 				<div id="poster-overlay" class="absolute bottom-0 left-0 right-0 p-12 md:p-20 z-10 flex flex-col items-center justify-center text-center pointer-events-none">
 					<div class="overlay-bg absolute inset-0 opacity-90 backdrop-blur-md -z-10 bg-white"></div>

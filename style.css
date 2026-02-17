@@ -44,7 +44,11 @@
 }
 
 #poster-container {
-	transition: width 0.3s ease, height 0.3s ease;
+	transition: width 0.3s ease, height 0.3s ease, background-color 0.3s ease;
+}
+
+#mode-tile.active, #mode-artistic.active {
+	@apply bg-indigo-600 text-white shadow-sm;
 }
 
 @keyframes pulse-ring {
