@@ -1,4 +1,6 @@
 import { state, updateState, getSelectedTheme, getSelectedArtisticTheme } from '../core/state.js';
+import { artisticThemes } from '../core/artistic-themes.js';
+import { themes } from '../core/themes.js';
 import { updateMapPosition, invalidateMapSize, updateArtisticStyle } from '../map/map-init.js';
 import { searchLocation, formatCoords } from '../map/geocoder.js';
 
@@ -18,6 +20,26 @@ export function setupControls() {
 	const themeSelect = document.getElementById('theme-select');
 	const artisticThemeSelect = document.getElementById('artistic-theme-select');
 	const artisticDesc = document.getElementById('artistic-desc');
+
+	if (artisticThemeSelect) {
+		artisticThemeSelect.innerHTML = Object.keys(artisticThemes)
+			.sort((a, b) => (artisticThemes[a].name || a).localeCompare(artisticThemes[b].name || b))
+			.map(key => {
+				const t = artisticThemes[key];
+				return `<option value="${key}">${t.name || key}</option>`;
+			})
+			.join('\n');
+	}
+
+	if (themeSelect) {
+		themeSelect.innerHTML = Object.keys(themes)
+			.sort((a, b) => (themes[a].name || a).localeCompare(themes[b].name || b))
+			.map(key => {
+				const t = themes[key];
+				return `<option value="${key}">${t.name || key}</option>`;
+			})
+			.join('\n');
+	}
 
 	const zoomControlContainer = zoomSlider.parentElement;
 

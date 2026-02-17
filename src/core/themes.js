@@ -1,13 +1,13 @@
 export const themes = {
-	minimal: {
-		name: "Minimal White",
-		tileUrl: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-		tileUrlNoLabels: "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
+	standard: {
+		name: "Classic Street",
+		tileUrl: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+		tileUrlNoLabels: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
 		background: "#ffffff",
 		textColor: "#000000",
-		accent: "#6366f1",
+		accent: "#3b82f6",
 		overlayBg: "rgba(255, 255, 255, 0.8)",
-		description: "Clean, elegant, and light. Perfect for modern spaces."
+		description: "The classic OpenStreetMap look that everyone knows."
 	},
 	dark: {
 		name: "Midnight Dark",
@@ -19,15 +19,15 @@ export const themes = {
 		overlayBg: "rgba(17, 17, 17, 0.85)",
 		description: "Sleek and professional dark map for a premium feel."
 	},
-	standard: {
-		name: "Classic Street",
-		tileUrl: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-		tileUrlNoLabels: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+	minimal: {
+		name: "Minimal White",
+		tileUrl: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+		tileUrlNoLabels: "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
 		background: "#ffffff",
 		textColor: "#000000",
-		accent: "#3b82f6",
+		accent: "#6366f1",
 		overlayBg: "rgba(255, 255, 255, 0.8)",
-		description: "The classic OpenStreetMap look that everyone knows."
+		description: "Clean, elegant, and light. Perfect for modern spaces."
 	},
 	voyager: {
 		name: "Modern Voyager",
