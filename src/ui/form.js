@@ -51,6 +51,7 @@ export function setupControls() {
 	const customW = document.getElementById('custom-w');
 	const customH = document.getElementById('custom-h');
 	const presetBtns = document.querySelectorAll('.preset-btn');
+	const exportBtn = document.getElementById('export-btn');
 
 	let searchTimeout;
 	searchInput.addEventListener('input', (e) => {
@@ -186,14 +187,14 @@ export function setupControls() {
 		zoomValue.textContent = currentState.zoom;
 
 		if (currentState.renderMode === 'tile') {
-			modeTile.className = 'flex-1 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white shadow-sm';
+			modeTile.className = 'flex-1 py-2 text-xs font-bold rounded-lg bg-accent text-white shadow-sm';
 			modeArtistic.className = 'flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 hover:text-slate-900';
 			if (standardThemeConfig) standardThemeConfig.classList.remove('hidden');
 			if (artisticThemeConfig) artisticThemeConfig.classList.add('hidden');
 			if (labelsControl) labelsControl.classList.remove('hidden');
 		} else {
 			modeTile.className = 'flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 hover:text-slate-900';
-			modeArtistic.className = 'flex-1 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white shadow-sm';
+			modeArtistic.className = 'flex-1 py-2 text-xs font-bold rounded-lg bg-accent text-white shadow-sm';
 			if (standardThemeConfig) standardThemeConfig.classList.add('hidden');
 			if (artisticThemeConfig) artisticThemeConfig.classList.remove('hidden');
 			if (labelsControl) labelsControl.classList.add('hidden');
@@ -210,10 +211,10 @@ export function setupControls() {
 			overlayBgButtons.forEach(b => {
 				const style = b.dataset.bg;
 				if (style === (currentState.overlayBgType || 'solid')) {
-					b.classList.add('bg-indigo-600', 'text-white');
+					b.classList.add('bg-accent', 'text-white');
 					b.classList.remove('bg-slate-50');
 				} else {
-					b.classList.remove('bg-indigo-600', 'text-white');
+					b.classList.remove('bg-accent', 'text-white');
 					b.classList.add('bg-slate-50');
 				}
 			});
@@ -222,16 +223,33 @@ export function setupControls() {
 			overlaySizeButtons.forEach(b => {
 				const s = b.dataset.size;
 				if (s === (currentState.overlaySize || 'medium')) {
-					b.classList.add('bg-indigo-600', 'text-white');
+					b.classList.add('bg-accent', 'text-white');
 					b.classList.remove('bg-slate-50');
 				} else {
-					b.classList.remove('bg-indigo-600', 'text-white');
+					b.classList.remove('bg-accent', 'text-white');
 					b.classList.add('bg-slate-50');
 				}
 			});
 		}
+
 		customW.value = currentState.width;
 		customH.value = currentState.height;
+
+		let accentColor = '#0f172a';
+		if (currentState.renderMode === 'artistic') {
+			const theme = getSelectedArtisticTheme();
+			accentColor = theme.road_primary || theme.text || '#0f172a';
+			exportBtn.classList.remove('bg-slate-900');
+			exportBtn.classList.add('bg-accent');
+		} else {
+			exportBtn.classList.add('bg-slate-900');
+			exportBtn.classList.remove('bg-accent');
+		}
+
+		const r = parseInt(accentColor.slice(1, 3), 16);
+		const g = parseInt(accentColor.slice(3, 5), 16);
+		const b = parseInt(accentColor.slice(5, 7), 16);
+		document.documentElement.style.setProperty('--accent-color-rgb', `${r}, ${g}, ${b}`);
 	};
 }
 
