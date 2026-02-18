@@ -303,7 +303,7 @@ export function setupControls() {
 					b.disabled = false;
 					b.classList.remove('opacity-50', 'pointer-events-none');
 				}
-				if (style === (currentState.overlayBgType || 'solid')) {
+				if (style === (currentState.overlayBgType || 'vignette')) {
 					b.classList.add('bg-accent', 'text-white');
 					b.classList.remove('bg-slate-50');
 				} else {
@@ -464,22 +464,13 @@ export function updatePreviewStyles(currentState) {
 			displayCity.style.fontSize = `${citySize}px`;
 			displayCoords.style.fontSize = `${coordsSize}px`;
 
-			const bgType = currentState.overlayBgType || 'solid';
+			const bgType = currentState.overlayBgType || 'vignette';
 			const color = activeTheme.overlayBg || activeTheme.background || activeTheme.bg;
 
 			if (overlayBg) {
-				if (bgType === 'solid') {
-					overlayBg.style.display = '';
-					overlayBg.style.backgroundColor = color;
-					overlayBg.style.opacity = activeTheme.overlayBg ? '1' : (isArtistic ? '0.75' : '0.9');
-					overlayBg.style.background = '';
-					overlayBg.style.backdropFilter = 'blur(16px)';
-					overlayBg.style.webkitBackdropFilter = 'blur(16px)';
-				} else {
-					overlayBg.style.display = 'none';
-					overlayBg.style.backdropFilter = '';
-					overlayBg.style.webkitBackdropFilter = '';
-				}
+				overlayBg.style.display = 'none';
+				overlayBg.style.backdropFilter = '';
+				overlayBg.style.webkitBackdropFilter = '';
 			}
 
 			if (vignetteOverlay) {

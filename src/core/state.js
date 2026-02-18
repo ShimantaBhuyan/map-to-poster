@@ -15,7 +15,7 @@ export const state = {
 	width: 2480,
 	height: 3508,
 	isExporting: false,
-	overlayBgType: 'solid',
+	overlayBgType: 'vignette',
 	overlaySize: 'medium',
 	showLabels: true,
 	renderMode: 'tile',
