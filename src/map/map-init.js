@@ -105,16 +105,20 @@ export function updateArtisticStyle(theme) {
 	currentArtisticThemeName = theme.name;
 	const style = generateMapLibreStyle(theme);
 
-	const styleNotReady = typeof artisticMap.isStyleLoaded === 'function' && !artisticMap.isStyleLoaded();
-	if (styleChangeInProgress || styleNotReady) {
+	if (styleChangeInProgress) {
 		pendingArtisticStyle = style;
 		pendingArtisticThemeName = theme.name;
-		styleChangeInProgress = true;
+		try { artisticMap.setStyle(style); } catch (e) { }
 		return;
 	}
 
 	styleChangeInProgress = true;
-	artisticMap.setStyle(style);
+	try {
+		artisticMap.setStyle(style);
+	} catch (e) {
+		pendingArtisticStyle = style;
+		pendingArtisticThemeName = theme.name;
+	}
 }
 
 function generateMapLibreStyle(theme) {
