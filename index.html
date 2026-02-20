@@ -11,7 +11,7 @@
 	<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,700;1,700&family=Cormorant+Garamond:wght@600&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Caveat:wght@400;700&family=Cormorant+Garamond:wght@600&family=Dancing+Script:wght@400;700&family=Inter:wght@400;700&family=Lora:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700&family=Open+Sans:wght@400;700&family=Outfit:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,700;1,700&family=Raleway:wght@400;700&family=Roboto:wght@400;700&family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
 
 	<style>
 		body {
@@ -92,9 +92,14 @@
 						<div id="search-results" class="absolute left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl z-[100] hidden max-h-64 overflow-y-auto p-2 backdrop-blur-xl"></div>
 					</div>
 
-					<div class="mt-2">
+					<div class="mt-2 text-left">
 						<span class="label-sm">Override City Name</span>
 						<input type="text" id="city-override-input" placeholder="Leave blank to use search result" class="input-field mt-1" />
+					</div>
+
+					<div class="mt-2 text-left">
+						<span class="label-sm">Override Country Name</span>
+						<input type="text" id="country-override-input" placeholder="Leave blank to use search result" class="input-field mt-1" />
 					</div>
 
 					<div class="grid grid-cols-2 gap-3">
@@ -193,7 +198,7 @@
 							</div>
 						</div>
 
-						<div class="flex items-center justify-between pt-2 border-t border-slate-50">
+						<div class="flex items-center justify-between pt-2 border-slate-50">
 							<span class="label-sm mb-0">Show Location Marker</span>
 							<label class="relative inline-flex items-center cursor-pointer">
 								<input type="checkbox" id="show-marker-toggle" class="sr-only peer">
@@ -234,8 +239,79 @@
 
 			<div class="space-y-4">
 				<div class="flex items-center justify-between">
-					<h3 class="text-sm font-semibold text-slate-900">4. Mat / Passepartout</h3>
+					<h3 class="text-sm font-semibold text-slate-900">4. Typography</h3>
 					<span class="w-5 h-5 bg-slate-100 rounded-md flex items-center justify-center text-[10px] font-bold text-slate-400">04</span>
+				</div>
+
+				<div class="space-y-4">
+					<div>
+						<span class="label-sm">City Font</span>
+						<div class="relative">
+							<select id="city-font-select" class="input-field appearance-none cursor-pointer">
+								<option value="'Bebas Neue', sans-serif">Bebas Neue</option>
+								<option value="'Caveat', cursive">Caveat</option>
+								<option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
+								<option value="'Dancing Script', cursive">Dancing Script</option>
+								<option value="'Inter', sans-serif">Inter</option>
+								<option value="'Lora', serif">Lora</option>
+								<option value="'Merriweather', serif">Merriweather</option>
+								<option value="'Montserrat', sans-serif">Montserrat</option>
+								<option value="'Outfit', sans-serif">Outfit</option>
+								<option value="'Playfair Display', serif">Playfair Display</option>
+								<option value="'Raleway', sans-serif">Raleway</option>
+								<option value="sans-serif">Generic Sans-Serif</option>
+								<option value="serif">Generic Serif</option>
+							</select>
+							<svg class="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+							</svg>
+						</div>
+					</div>
+
+					<div>
+						<span class="label-sm">Country Font</span>
+						<div class="relative">
+							<select id="country-font-select" class="input-field appearance-none cursor-pointer">
+								<option value="'Caveat', cursive">Caveat</option>
+								<option value="'Inter', sans-serif">Inter</option>
+								<option value="'Lora', serif">Lora</option>
+								<option value="'Montserrat', sans-serif">Montserrat</option>
+								<option value="'Open Sans', sans-serif">Open Sans</option>
+								<option value="'Outfit', sans-serif">Outfit</option>
+								<option value="'Playfair Display', serif">Playfair Display</option>
+								<option value="'Raleway', sans-serif">Raleway</option>
+								<option value="'Roboto', sans-serif">Roboto</option>
+								<option value="sans-serif">Generic Sans-Serif</option>
+							</select>
+							<svg class="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+							</svg>
+						</div>
+					</div>
+
+					<div>
+						<span class="label-sm">Coordinates Font</span>
+						<div class="relative">
+							<select id="coords-font-select" class="input-field appearance-none cursor-pointer">
+								<option value="monospace">Monospace</option>
+								<option value="'Montserrat', sans-serif">Montserrat</option>
+								<option value="'Outfit', sans-serif">Outfit</option>
+								<option value="'Roboto', sans-serif">Roboto</option>
+								<option value="'Source Code Pro', monospace">Source Code Pro</option>
+								<option value="sans-serif">Generic Sans-Serif</option>
+							</select>
+							<svg class="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+							</svg>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="space-y-4">
+				<div class="flex items-center justify-between">
+					<h3 class="text-sm font-semibold text-slate-900">5. Mat / Passepartout</h3>
+					<span class="w-5 h-5 bg-slate-100 rounded-md flex items-center justify-center text-[10px] font-bold text-slate-400">05</span>
 				</div>
 
 				<div class="space-y-4">
@@ -287,8 +363,8 @@
 
 			<div class="space-y-4">
 				<div class="flex items-center justify-between">
-					<h3 class="text-sm font-semibold text-slate-900">5. Output Size</h3>
-					<span class="w-5 h-5 bg-slate-100 rounded-md flex items-center justify-center text-[10px] font-bold text-slate-400">05</span>
+					<h3 class="text-sm font-semibold text-slate-900">6. Output Size</h3>
+					<span class="w-5 h-5 bg-slate-100 rounded-md flex items-center justify-center text-[10px] font-bold text-slate-400">06</span>
 				</div>
 
 				<div class="space-y-4">
@@ -363,11 +439,12 @@
 				<div id="poster-overlay" class="absolute bottom-0 left-0 right-0 p-12 md:p-20 z-10 flex flex-col items-center justify-center text-center pointer-events-none">
 					<div class="overlay-bg absolute inset-0 -z-10"></div>
 
-					<h2 id="display-city" class="text-6xl md:text-8xl font-bold uppercase tracking-[0.25em] pl-[0.25em] text-slate-900 mb-6 font-serif break-words w-full leading-tight">JAKARTA</h2>
+					<h2 id="display-city" class="text-6xl md:text-8xl font-bold uppercase tracking-[0.25em] pl-[0.25em] text-slate-900 mb-4 font-serif break-words w-full leading-tight">JAKARTA</h2>
 
-					<div id="poster-divider" class="h-px w-32 bg-slate-900 mb-6 opacity-80"></div>
+					<div id="poster-divider" class="h-px w-32 bg-slate-900 mb-4 opacity-80"></div>
 
-					<div class="flex flex-col items-center space-y-1">
+					<div class="flex flex-col items-center space-y-0">
+						<p id="display-country" class="text-lg md:text-xl tracking-[0.4em] pl-[0.4em] font-bold text-slate-900 uppercase mb-0">INDONESIA</p>
 						<p id="display-coords" class="text-base md:text-lg tracking-[0.4em] pl-[0.4em] font-medium text-slate-600">6.2088° S / 106.8456° E</p>
 					</div>
 				</div>

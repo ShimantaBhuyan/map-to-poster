@@ -316,15 +316,16 @@ export async function exportToPNG(element, filename, statusElement, options = {}
 
 					const matEnabled = state.matEnabled;
 					const matWidthLogical = matEnabled ? (state.matWidth / scale) : 0;
+					const liftOffset = 20 / scale;
 
 					if (matEnabled) {
 						overlay.style.left = `${matWidthLogical}px`;
 						overlay.style.right = `${matWidthLogical}px`;
-						overlay.style.bottom = `${matWidthLogical}px`;
+						overlay.style.bottom = `${matWidthLogical + liftOffset}px`;
 					} else {
 						overlay.style.left = '0';
 						overlay.style.right = '0';
-						overlay.style.bottom = '0';
+						overlay.style.bottom = `${liftOffset}px`;
 					}
 					overlay.style.zIndex = '10';
 
@@ -348,12 +349,21 @@ export async function exportToPNG(element, filename, statusElement, options = {}
 				if (city) {
 					city.style.transform = 'none';
 					city.style.color = textColor;
+					city.style.fontFamily = state.cityFont;
+				}
+
+				const country = clonedDoc.querySelector('#display-country');
+				if (country) {
+					country.style.transform = 'none';
+					country.style.color = textColor;
+					country.style.fontFamily = state.countryFont;
 				}
 
 				const coords = clonedDoc.querySelector('#display-coords');
 				if (coords) {
 					coords.style.transform = 'none';
 					coords.style.color = textColor;
+					coords.style.fontFamily = state.coordsFont;
 				}
 
 				const clonedDivider = clonedDoc.querySelector('#poster-divider');
@@ -361,7 +371,7 @@ export async function exportToPNG(element, filename, statusElement, options = {}
 					clonedDivider.style.transform = 'none';
 					clonedDivider.style.backgroundColor = textColor;
 
-					const defaultDividerOffsets = { small: 48, medium: 54, large: 72 };
+					const defaultDividerOffsets = { small: 32, medium: 40, large: 56 };
 					const opts = Object.assign({}, options || {});
 					let dividerOffset = 0;
 					if (typeof opts.dividerOffset === 'number') {
@@ -375,10 +385,12 @@ export async function exportToPNG(element, filename, statusElement, options = {}
 
 					if (dividerOffset && city) {
 						if (dividerOffset > 0) {
-							city.style.marginBottom = (parseFloat(city.style.marginBottom || '0') + dividerOffset) + 'px';
+							city.style.marginBottom = dividerOffset + 'px';
 						} else {
-							clonedDivider.style.marginTop = (parseFloat(clonedDivider.style.marginTop || '0') + dividerOffset) + 'px';
+							clonedDivider.style.marginTop = dividerOffset + 'px';
 						}
+
+						clonedDivider.style.marginBottom = Math.round(dividerOffset * 0.2) + 'px';
 					}
 				}
 			}

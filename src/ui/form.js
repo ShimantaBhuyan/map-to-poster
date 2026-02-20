@@ -20,6 +20,10 @@ export function setupControls() {
 	const latInput = document.getElementById('lat-input');
 	const lonInput = document.getElementById('lon-input');
 	const cityOverrideInput = document.getElementById('city-override-input');
+	const countryOverrideInput = document.getElementById('country-override-input');
+	const cityFontSelect = document.getElementById('city-font-select');
+	const countryFontSelect = document.getElementById('country-font-select');
+	const coordsFontSelect = document.getElementById('coords-font-select');
 	const zoomSlider = document.getElementById('zoom-slider');
 	const zoomValue = document.getElementById('zoom-value');
 
@@ -240,7 +244,7 @@ export function setupControls() {
 
 			if (results && results.length > 0) {
 				searchResults.innerHTML = results.map(r => `
-		  <div class="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm" data-lat="${r.lat}" data-lon="${r.lon}" data-name="${r.shortName}">
+		  <div class="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm" data-lat="${r.lat}" data-lon="${r.lon}" data-name="${r.shortName}" data-country="${r.country || ''}">
 			${r.name}
 		  </div>
 		`).join('');
@@ -258,9 +262,13 @@ export function setupControls() {
 		const lat = parseFloat(item.dataset.lat);
 		const lon = parseFloat(item.dataset.lon);
 		const name = item.dataset.name;
+		const country = item.dataset.country;
 
 		if (!cityOverrideInput || !cityOverrideInput.value.trim()) {
 			updateState({ city: name.toUpperCase() });
+		}
+		if (!countryOverrideInput || !countryOverrideInput.value.trim()) {
+			updateState({ country: country ? country.toUpperCase() : '' });
 		}
 		updateState({ lat, lon, markerLat: lat, markerLon: lon });
 		updateMapPosition(lat, lon);
@@ -301,6 +309,32 @@ export function setupControls() {
 		cityOverrideInput.addEventListener('input', (e) => {
 			const v = e.target.value;
 			updateState({ cityOverride: v ? v.toUpperCase() : '' });
+		});
+	}
+
+	if (countryOverrideInput) {
+		countryOverrideInput.value = state.countryOverride || '';
+		countryOverrideInput.addEventListener('input', (e) => {
+			const v = e.target.value;
+			updateState({ countryOverride: v ? v.toUpperCase() : '' });
+		});
+	}
+
+	if (cityFontSelect) {
+		cityFontSelect.addEventListener('change', (e) => {
+			updateState({ cityFont: e.target.value });
+		});
+	}
+
+	if (countryFontSelect) {
+		countryFontSelect.addEventListener('change', (e) => {
+			updateState({ countryFont: e.target.value });
+		});
+	}
+
+	if (coordsFontSelect) {
+		coordsFontSelect.addEventListener('change', (e) => {
+			updateState({ coordsFont: e.target.value });
 		});
 	}
 
@@ -442,6 +476,11 @@ export function setupControls() {
 
 	return (currentState) => {
 		if (cityOverrideInput) cityOverrideInput.value = currentState.cityOverride || '';
+		if (countryOverrideInput) countryOverrideInput.value = currentState.countryOverride || '';
+		if (cityFontSelect) cityFontSelect.value = currentState.cityFont;
+		if (countryFontSelect) countryFontSelect.value = currentState.countryFont;
+		if (coordsFontSelect) coordsFontSelect.value = currentState.coordsFont;
+
 		latInput.value = currentState.lat.toFixed(6);
 		lonInput.value = currentState.lon.toFixed(6);
 		zoomSlider.value = currentState.zoom;
@@ -589,6 +628,7 @@ export function updatePreviewStyles(currentState) {
 	const posterContainer = document.getElementById('poster-container');
 	const posterScaler = document.getElementById('poster-scaler');
 	const displayCity = document.getElementById('display-city');
+	const displayCountry = document.getElementById('display-country');
 	const displayCoords = document.getElementById('display-coords');
 	const overlay = document.getElementById('poster-overlay');
 	const overlayBg = overlay ? overlay.querySelector('.overlay-bg') : null;
@@ -682,8 +722,18 @@ export function updatePreviewStyles(currentState) {
 
 	displayCity.textContent = (currentState.cityOverride && currentState.cityOverride.length) ? currentState.cityOverride : currentState.city;
 	displayCity.style.color = activeTheme.text || activeTheme.textColor;
+	displayCity.style.fontFamily = currentState.cityFont;
+
+	if (displayCountry) {
+		displayCountry.textContent = (currentState.countryOverride && currentState.countryOverride.length) ? currentState.countryOverride : currentState.country;
+		displayCountry.style.color = activeTheme.text || activeTheme.textColor;
+		displayCountry.style.fontFamily = currentState.countryFont;
+		displayCountry.style.display = (displayCountry.textContent) ? 'block' : 'none';
+	}
+
 	displayCoords.textContent = formatCoords(currentState.lat, currentState.lon);
 	displayCoords.style.color = activeTheme.text || activeTheme.textColor;
+	displayCoords.style.fontFamily = currentState.coordsFont;
 
 	if (overlay) {
 		const size = currentState.overlaySize || 'medium';
@@ -704,19 +754,23 @@ export function updatePreviewStyles(currentState) {
 			const isMobile = window.innerWidth < 768;
 			let pad = isMobile ? 24 : 48;
 			let citySize = isMobile ? 32 : 64;
+			let countrySize = isMobile ? 12 : 20;
 			let coordsSize = isMobile ? 10 : 16;
 
 			if (size === 'small') {
 				pad = isMobile ? 12 : 24;
 				citySize = isMobile ? 24 : 40;
+				countrySize = isMobile ? 10 : 14;
 				coordsSize = isMobile ? 8 : 12;
 			} else if (size === 'large') {
 				pad = isMobile ? 40 : 80;
 				citySize = isMobile ? 48 : 96;
+				countrySize = isMobile ? 16 : 24;
 				coordsSize = isMobile ? 14 : 20;
 			}
 			overlay.style.padding = `${pad}px`;
 			displayCity.style.fontSize = `${citySize}px`;
+			if (displayCountry) displayCountry.style.fontSize = `${countrySize}px`;
 			displayCoords.style.fontSize = `${coordsSize}px`;
 
 			if (matEnabled) {

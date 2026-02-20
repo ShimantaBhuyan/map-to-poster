@@ -10,7 +10,6 @@ initMap('map-preview', [state.lat, state.lon], state.zoom, initialTheme.tileUrl)
 const syncUI = setupControls();
 
 const exportBtn = document.getElementById('export-btn');
-const exportStatus = document.getElementById('export-status');
 const posterContainer = document.getElementById('poster-container');
 
 const mobileToggle = document.getElementById('mobile-toggle');

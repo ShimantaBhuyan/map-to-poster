@@ -8,6 +8,11 @@ const STORAGE_KEY = 'map-to-poster:settings';
 export const defaultState = {
 	city: "JAKARTA",
 	cityOverride: "",
+	country: "INDONESIA",
+	countryOverride: "",
+	cityFont: "'Playfair Display', serif",
+	countryFont: "'Outfit', sans-serif",
+	coordsFont: "'Outfit', sans-serif",
 	lat: -6.2088,
 	lon: 106.8456,
 	zoom: 12,
@@ -37,6 +42,11 @@ export const state = { ...defaultState };
 const SAVED_KEYS = [
 	'city',
 	'cityOverride',
+	'country',
+	'countryOverride',
+	'cityFont',
+	'countryFont',
+	'coordsFont',
 	'lat',
 	'lon',
 	'zoom',
