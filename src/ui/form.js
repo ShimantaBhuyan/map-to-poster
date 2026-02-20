@@ -1,4 +1,4 @@
-import { state, updateState, getSelectedTheme, getSelectedArtisticTheme } from '../core/state.js';
+import { state, updateState, defaultState, getSelectedTheme, getSelectedArtisticTheme } from '../core/state.js';
 import { hexToRgba } from '../core/utils.js';
 import { artisticThemes } from '../core/artistic-themes.js';
 import { themes } from '../core/themes.js';
@@ -361,8 +361,26 @@ export function setupControls() {
 		});
 	});
 
-	customW.addEventListener('change', (e) => updateState({ width: parseInt(e.target.value) || state.width }));
-	customH.addEventListener('change', (e) => updateState({ height: parseInt(e.target.value) || state.height }));
+	const MAX_RES = 50000;
+	customW.addEventListener('change', (e) => {
+		let val = parseInt(e.target.value) || state.width;
+		if (val > MAX_RES) val = MAX_RES;
+		updateState({ width: val });
+	});
+	customH.addEventListener('change', (e) => {
+		let val = parseInt(e.target.value) || state.height;
+		if (val > MAX_RES) val = MAX_RES;
+		updateState({ height: val });
+	});
+
+	const resetSettingsBtn = document.getElementById('reset-settings-btn');
+	if (resetSettingsBtn) {
+		resetSettingsBtn.addEventListener('click', () => {
+			if (confirm('Apakah Anda yakin ingin mengatur ulang semua pengaturan ke default?')) {
+				updateState(defaultState);
+			}
+		});
+	}
 
 	return (currentState) => {
 		if (cityOverrideInput) cityOverrideInput.value = currentState.cityOverride || '';

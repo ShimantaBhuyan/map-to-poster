@@ -5,7 +5,7 @@ let observers = [];
 
 const STORAGE_KEY = 'map-to-poster:settings';
 
-export const state = {
+export const defaultState = {
 	city: "JAKARTA",
 	cityOverride: "",
 	lat: -6.2088,
@@ -26,6 +26,8 @@ export const state = {
 	matBorderWidth: 1,
 	matBorderOpacity: 1,
 };
+
+export const state = { ...defaultState };
 
 const SAVED_KEYS = [
 	'city',
