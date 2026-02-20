@@ -56,6 +56,47 @@ export function setupControls() {
 	const presetBtns = document.querySelectorAll('.preset-btn');
 	const exportBtn = document.getElementById('export-btn');
 
+	const matToggle = document.getElementById('mat-toggle');
+	const matSettings = document.getElementById('mat-settings');
+	const matWidthSlider = document.getElementById('mat-width-slider');
+	const matWidthValue = document.getElementById('mat-width-value');
+	const matBorderToggle = document.getElementById('mat-border-toggle');
+	const matBorderSettings = document.getElementById('mat-border-settings');
+	const matBorderWidthSlider = document.getElementById('mat-border-width-slider');
+	const matBorderWidthValue = document.getElementById('mat-border-width-value');
+	const matBorderOpacitySlider = document.getElementById('mat-border-opacity-slider');
+	const matBorderOpacityValue = document.getElementById('mat-border-opacity-value');
+
+	if (matToggle) {
+		matToggle.addEventListener('change', (e) => {
+			updateState({ matEnabled: e.target.checked });
+		});
+	}
+
+	if (matWidthSlider) {
+		matWidthSlider.addEventListener('input', (e) => {
+			updateState({ matWidth: parseInt(e.target.value) });
+		});
+	}
+
+	if (matBorderToggle) {
+		matBorderToggle.addEventListener('change', (e) => {
+			updateState({ matShowBorder: e.target.checked });
+		});
+	}
+
+	if (matBorderWidthSlider) {
+		matBorderWidthSlider.addEventListener('input', (e) => {
+			updateState({ matBorderWidth: parseInt(e.target.value) });
+		});
+	}
+
+	if (matBorderOpacitySlider) {
+		matBorderOpacitySlider.addEventListener('input', (e) => {
+			updateState({ matBorderOpacity: parseFloat(e.target.value) });
+		});
+	}
+
 	const otherPresetsBtn = document.getElementById('other-presets-btn');
 	const presetsModal = document.getElementById('presets-modal');
 	const closeModal = document.getElementById('close-modal');
@@ -386,6 +427,24 @@ export function setupControls() {
 		customW.value = currentState.width;
 		customH.value = currentState.height;
 
+		if (matToggle) matToggle.checked = !!currentState.matEnabled;
+		if (matSettings) {
+			if (currentState.matEnabled) matSettings.classList.remove('hidden');
+			else matSettings.classList.add('hidden');
+		}
+		if (matWidthSlider) matWidthSlider.value = currentState.matWidth || 40;
+		if (matWidthValue) matWidthValue.textContent = `${currentState.matWidth || 40}px`;
+		if (matBorderToggle) matBorderToggle.checked = !!currentState.matShowBorder;
+
+		if (matBorderSettings) {
+			if (currentState.matEnabled && currentState.matShowBorder) matBorderSettings.classList.remove('hidden');
+			else matBorderSettings.classList.add('hidden');
+		}
+		if (matBorderWidthSlider) matBorderWidthSlider.value = currentState.matBorderWidth || 1;
+		if (matBorderWidthValue) matBorderWidthValue.textContent = `${currentState.matBorderWidth || 1}px`;
+		if (matBorderOpacitySlider) matBorderOpacitySlider.value = currentState.matBorderOpacity || 1;
+		if (matBorderOpacityValue) matBorderOpacityValue.textContent = `${Math.round((currentState.matBorderOpacity || 1) * 100)}%`;
+
 		let isMainPresetActive = false;
 		if (presetBtns && presetBtns.length) {
 			presetBtns.forEach(btn => {
@@ -432,6 +491,8 @@ export function setupControls() {
 
 let lastWidth = null;
 let lastHeight = null;
+let lastMatEnabled = null;
+let lastMatWidth = null;
 
 export function updatePreviewStyles(currentState) {
 	const posterContainer = document.getElementById('poster-container');
@@ -441,6 +502,7 @@ export function updatePreviewStyles(currentState) {
 	const overlay = document.getElementById('poster-overlay');
 	const overlayBg = overlay ? overlay.querySelector('.overlay-bg') : null;
 	const vignetteOverlay = document.getElementById('vignette-overlay');
+	const matBorder = document.getElementById('mat-border');
 	const divider = document.getElementById('poster-divider');
 
 	const theme = getSelectedTheme();
@@ -451,6 +513,13 @@ export function updatePreviewStyles(currentState) {
 	const artisticMapDiv = document.getElementById('artistic-map');
 
 	const activeTheme = isArtistic ? artisticTheme : theme;
+
+	const matEnabled = currentState.matEnabled;
+	const matWidth = matEnabled ? (currentState.matWidth || 0) : 0;
+	const showBorder = matEnabled && currentState.matShowBorder;
+	const borderColor = activeTheme.text || activeTheme.textColor || '#000000';
+	const borderWidth = currentState.matBorderWidth || 1;
+	const borderOpacity = currentState.matBorderOpacity || 1;
 
 	if (isArtistic) {
 		mapPreview.style.visibility = 'hidden';
@@ -465,9 +534,44 @@ export function updatePreviewStyles(currentState) {
 		artisticMapDiv.style.pointerEvents = 'none';
 	}
 
+	[mapPreview, artisticMapDiv].forEach(el => {
+		if (el) {
+			el.style.top = `${matWidth}px`;
+			el.style.left = `${matWidth}px`;
+			el.style.right = `${matWidth}px`;
+			el.style.bottom = `${matWidth}px`;
+			el.style.outline = 'none';
+		}
+	});
+
+	if (matBorder) {
+		if (matEnabled && showBorder) {
+			matBorder.style.display = 'block';
+			matBorder.style.top = `${matWidth}px`;
+			matBorder.style.left = `${matWidth}px`;
+			matBorder.style.right = `${matWidth}px`;
+			matBorder.style.bottom = `${matWidth}px`;
+			matBorder.style.border = `${borderWidth}px solid ${borderColor}`;
+			matBorder.style.opacity = borderOpacity;
+		} else {
+			matBorder.style.display = 'none';
+		}
+	}
+
+	if (vignetteOverlay) {
+		vignetteOverlay.style.top = `${matWidth}px`;
+		vignetteOverlay.style.left = `${matWidth}px`;
+		vignetteOverlay.style.right = `${matWidth}px`;
+		vignetteOverlay.style.bottom = `${matWidth}px`;
+	}
+
 	const sizeChanged = lastWidth !== currentState.width || lastHeight !== currentState.height;
+	const matChanged = lastMatEnabled !== currentState.matEnabled || lastMatWidth !== currentState.matWidth;
+
 	lastWidth = currentState.width;
 	lastHeight = currentState.height;
+	lastMatEnabled = currentState.matEnabled;
+	lastMatWidth = currentState.matWidth;
 
 	posterContainer.style.width = `${currentState.width}px`;
 	posterContainer.style.height = `${currentState.height}px`;
@@ -524,6 +628,16 @@ export function updatePreviewStyles(currentState) {
 			displayCity.style.fontSize = `${citySize}px`;
 			displayCoords.style.fontSize = `${coordsSize}px`;
 
+			if (matEnabled) {
+				overlay.style.left = `${matWidth}px`;
+				overlay.style.right = `${matWidth}px`;
+				overlay.style.bottom = `${matWidth}px`;
+			} else {
+				overlay.style.left = '0';
+				overlay.style.right = '0';
+				overlay.style.bottom = '0';
+			}
+
 			const bgType = currentState.overlayBgType || 'vignette';
 			const color = activeTheme.background || activeTheme.bg || activeTheme.overlayBg || '#ffffff';
 
@@ -548,7 +662,7 @@ export function updatePreviewStyles(currentState) {
 	}
 	if (divider) divider.style.backgroundColor = activeTheme.text || activeTheme.textColor;
 
-	if (sizeChanged) {
+	if (sizeChanged || matChanged) {
 		setTimeout(() => {
 			invalidateMapSize();
 			updateMapPosition(currentState.lat, currentState.lon, currentState.zoom, { animate: false });

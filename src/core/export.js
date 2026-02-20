@@ -12,9 +12,13 @@ async function captureMapSnapshot() {
 
 	const isArtistic = state.renderMode === 'artistic';
 
+	const matWidth = state.matEnabled ? (state.matWidth || 0) : 0;
+	const effectiveWidth = state.width - (2 * matWidth);
+	const effectiveHeight = state.height - (2 * matWidth);
+
 	const canvas = document.createElement('canvas');
-	canvas.width = state.width;
-	canvas.height = state.height;
+	canvas.width = Math.max(1, effectiveWidth);
+	canvas.height = Math.max(1, effectiveHeight);
 	const ctx = canvas.getContext('2d');
 
 	if (isArtistic) {
@@ -24,8 +28,8 @@ async function captureMapSnapshot() {
 				const originalWidth = artisticContainer.style.width;
 				const originalHeight = artisticContainer.style.height;
 
-				artisticContainer.style.width = `${state.width}px`;
-				artisticContainer.style.height = `${state.height}px`;
+				artisticContainer.style.width = `${effectiveWidth}px`;
+				artisticContainer.style.height = `${effectiveHeight}px`;
 				artisticMap.resize();
 
 				await new Promise(resolve => {
@@ -55,7 +59,7 @@ async function captureMapSnapshot() {
 
 			const containerRect = mapPreviewContainer.getBoundingClientRect();
 
-			const scaleFactor = state.width / containerRect.width;
+			const scaleFactor = effectiveWidth / containerRect.width;
 
 			tiles.forEach(tile => {
 				if (tile.complete && tile.naturalWidth > 0) {
@@ -157,21 +161,64 @@ export async function exportToPNG(element, filename, statusElement, options = {}
 
 					const cMap = clonedDoc.querySelector('#map-preview');
 					const cArt = clonedDoc.querySelector('#artistic-map');
+					const cBorder = clonedDoc.querySelector('#mat-border');
 					if (cMap) cMap.style.visibility = 'hidden';
 					if (cArt) cArt.style.visibility = 'hidden';
+					if (cBorder) cBorder.style.visibility = 'hidden';
+
+					const matEnabled = state.matEnabled;
+					const matWidthLogical = matEnabled ? (state.matWidth / scale) : 0;
 
 					if (snapshot) {
 						const img = clonedDoc.createElement('img');
 						img.src = snapshot;
 						img.style.position = 'absolute';
-						img.style.top = '0';
-						img.style.left = '0';
-						img.style.width = '100%';
-						img.style.height = '100%';
+						img.style.top = `${matWidthLogical}px`;
+						img.style.left = `${matWidthLogical}px`;
+						img.style.width = `${logicalContainerWidth - 2 * matWidthLogical}px`;
+						img.style.height = `${logicalContainerHeight - 2 * matWidthLogical}px`;
 						img.style.objectFit = 'cover';
 						img.style.zIndex = '0';
 						img.style.display = 'block';
+
+						if (matEnabled && state.matShowBorder) {
+							const borderDiv = clonedDoc.createElement('div');
+							borderDiv.style.position = 'absolute';
+							borderDiv.style.top = `${matWidthLogical}px`;
+							borderDiv.style.left = `${matWidthLogical}px`;
+							borderDiv.style.width = `${logicalContainerWidth - 2 * matWidthLogical}px`;
+							borderDiv.style.height = `${logicalContainerHeight - 2 * matWidthLogical}px`;
+							const borderWidth = (state.matBorderWidth || 1) / scale;
+							borderDiv.style.border = `${borderWidth}px solid ${textColor}`;
+							borderDiv.style.opacity = state.matBorderOpacity || 1;
+							borderDiv.style.zIndex = '6';
+							borderDiv.style.pointerEvents = 'none';
+							borderDiv.style.boxSizing = 'border-box';
+							clonedContainer.appendChild(borderDiv);
+						}
+
 						clonedContainer.prepend(img);
+					}
+
+					const vignette = clonedDoc.querySelector('#vignette-overlay');
+					if (vignette) {
+						vignette.style.position = 'absolute';
+						vignette.style.top = `${matWidthLogical}px`;
+						vignette.style.left = `${matWidthLogical}px`;
+						vignette.style.width = `${logicalContainerWidth - 2 * matWidthLogical}px`;
+						vignette.style.height = `${logicalContainerHeight - 2 * matWidthLogical}px`;
+						vignette.style.pointerEvents = 'none';
+						vignette.style.zIndex = '5';
+
+						if (state.overlayBgType === 'vignette') {
+							vignette.style.display = 'block';
+							vignette.style.opacity = '1';
+							const colorSolid = hexToRgba(themeColor, 1);
+							const colorTrans = hexToRgba(themeColor, 0);
+							vignette.style.background = `linear-gradient(to bottom, ${colorSolid} 0%, ${colorSolid} 3%, ${colorTrans} 20%, ${colorTrans} 80%, ${colorSolid} 97%, ${colorSolid} 100%)`;
+						} else {
+							vignette.style.display = 'none';
+						}
 					}
 				}
 
@@ -179,10 +226,20 @@ export async function exportToPNG(element, filename, statusElement, options = {}
 				if (overlay) {
 					overlay.style.transform = 'none';
 					overlay.style.position = 'absolute';
-					overlay.style.left = '0';
-					overlay.style.right = '0';
-					overlay.style.bottom = '0';
-					overlay.style.zIndex = '4';
+
+					const matEnabled = state.matEnabled;
+					const matWidthLogical = matEnabled ? (state.matWidth / scale) : 0;
+
+					if (matEnabled) {
+						overlay.style.left = `${matWidthLogical}px`;
+						overlay.style.right = `${matWidthLogical}px`;
+						overlay.style.bottom = `${matWidthLogical}px`;
+					} else {
+						overlay.style.left = '0';
+						overlay.style.right = '0';
+						overlay.style.bottom = '0';
+					}
+					overlay.style.zIndex = '10';
 
 					const clonedOverlayBg = clonedDoc.querySelector('.overlay-bg');
 					if (clonedOverlayBg && clonedContainer) {
@@ -197,29 +254,6 @@ export async function exportToPNG(element, filename, statusElement, options = {}
 						clonedOverlayBg.style.pointerEvents = 'none';
 						clonedOverlayBg.style.zIndex = '1';
 						clonedOverlayBg.style.display = 'none';
-					}
-				}
-
-				const clonedVignette = clonedDoc.querySelector('#vignette-overlay');
-				if (clonedVignette && clonedContainer) {
-					clonedVignette.style.position = 'absolute';
-					clonedVignette.style.top = '0';
-					clonedVignette.style.left = '0';
-					clonedVignette.style.right = '0';
-					clonedVignette.style.bottom = '0';
-					clonedVignette.style.width = '100%';
-					clonedVignette.style.height = '100%';
-					clonedVignette.style.pointerEvents = 'none';
-					clonedVignette.style.zIndex = '2';
-
-					if (state.overlayBgType === 'vignette') {
-						clonedVignette.style.display = 'block';
-						clonedVignette.style.opacity = '1';
-						const colorSolid = hexToRgba(themeColor, 1);
-						const colorTrans = hexToRgba(themeColor, 0);
-						clonedVignette.style.background = `linear-gradient(to bottom, ${colorSolid} 0%, ${colorSolid} 3%, ${colorTrans} 20%, ${colorTrans} 80%, ${colorSolid} 97%, ${colorSolid} 100%)`;
-					} else {
-						clonedVignette.style.display = 'none';
 					}
 				}
 

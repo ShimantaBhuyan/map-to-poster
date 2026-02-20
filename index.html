@@ -131,10 +131,11 @@
 							</div>
 						</div>
 
-						<div id="labels-control">
-							<label class="flex items-center space-x-2 cursor-pointer">
-								<input type="checkbox" id="show-labels-toggle" class="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent" checked />
-								<span class="label-sm mb-0 normal-case font-semibold text-slate-600">Show Place Labels</span>
+						<div id="labels-control" class="flex items-center justify-between mt-2 pt-2 border-t border-slate-50">
+							<span class="label-sm mb-0 normal-case font-semibold text-slate-600">Show Place Labels</span>
+							<label class="relative inline-flex items-center cursor-pointer">
+								<input type="checkbox" id="show-labels-toggle" class="sr-only peer" checked>
+								<div class="toggle-pill"></div>
 							</label>
 						</div>
 					</div>
@@ -194,8 +195,61 @@
 
 			<div class="space-y-4">
 				<div class="flex items-center justify-between">
-					<h3 class="text-sm font-semibold text-slate-900">4. Output Size</h3>
+					<h3 class="text-sm font-semibold text-slate-900">4. Mat / Passepartout</h3>
 					<span class="w-5 h-5 bg-slate-100 rounded-md flex items-center justify-center text-[10px] font-bold text-slate-400">04</span>
+				</div>
+
+				<div class="space-y-4">
+					<div class="flex items-center justify-between">
+						<span class="label-sm">Enable Mat</span>
+						<label class="relative inline-flex items-center cursor-pointer">
+							<input type="checkbox" id="mat-toggle" class="sr-only peer">
+							<div class="toggle-pill"></div>
+						</label>
+					</div>
+
+					<div id="mat-settings" class="space-y-4 hidden">
+						<div>
+							<div class="flex justify-between items-center mb-2">
+								<span class="label-sm mb-0">Mat Width</span>
+								<span id="mat-width-value" class="text-xs font-bold text-accent bg-accent-light px-2 py-0.5 rounded-full">40px</span>
+							</div>
+							<input type="range" id="mat-width-slider" min="10" max="200" step="5" value="40" class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-accent" />
+						</div>
+
+						<div class="flex items-center justify-between">
+							<span class="label-sm">Show Inner Border</span>
+							<label class="relative inline-flex items-center cursor-pointer">
+								<input type="checkbox" id="mat-border-toggle" class="sr-only peer" checked>
+								<div class="toggle-pill"></div>
+							</label>
+						</div>
+
+						<div id="mat-border-settings" class="space-y-4">
+							<div>
+								<div class="flex justify-between items-center mb-2">
+									<span class="label-sm mb-0">Border Thickness</span>
+									<span id="mat-border-width-value" class="text-xs font-bold text-accent bg-accent-light px-2 py-0.5 rounded-full">1px</span>
+								</div>
+								<input type="range" id="mat-border-width-slider" min="1" max="10" step="1" value="1" class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-accent" />
+							</div>
+
+							<div>
+								<div class="flex justify-between items-center mb-2">
+									<span class="label-sm mb-0">Border Opacity</span>
+									<span id="mat-border-opacity-value" class="text-xs font-bold text-accent bg-accent-light px-2 py-0.5 rounded-full">100%</span>
+								</div>
+								<input type="range" id="mat-border-opacity-slider" min="0" max="1" step="0.1" value="1" class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-accent" />
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="space-y-4">
+				<div class="flex items-center justify-between">
+					<h3 class="text-sm font-semibold text-slate-900">5. Output Size</h3>
+					<span class="w-5 h-5 bg-slate-100 rounded-md flex items-center justify-center text-[10px] font-bold text-slate-400">05</span>
 				</div>
 
 				<div class="space-y-4">
@@ -257,6 +311,7 @@
 			<div id="poster-container" class="relative bg-white shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] ring-1 ring-black/5 overflow-hidden">
 				<div id="map-preview" class="absolute inset-0 z-0 grayscale-[0.2]"></div>
 				<div id="artistic-map" class="absolute inset-0 z-[1]"></div>
+				<div id="mat-border" class="absolute pointer-events-none z-[6]"></div>
 				<div id="vignette-overlay" class="absolute inset-0 z-[5] pointer-events-none"></div>
 
 				<div id="poster-overlay" class="absolute bottom-0 left-0 right-0 p-12 md:p-20 z-10 flex flex-col items-center justify-center text-center pointer-events-none">

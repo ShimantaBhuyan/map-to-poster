@@ -20,6 +20,11 @@ export const state = {
 	showLabels: true,
 	renderMode: 'tile',
 	artisticTheme: 'arctic_frost',
+	matEnabled: false,
+	matWidth: 40,
+	matShowBorder: true,
+	matBorderWidth: 1,
+	matBorderOpacity: 1,
 };
 
 const SAVED_KEYS = [
@@ -35,7 +40,12 @@ const SAVED_KEYS = [
 	'overlaySize',
 	'showLabels',
 	'renderMode',
-	'artisticTheme'
+	'artisticTheme',
+	'matEnabled',
+	'matWidth',
+	'matShowBorder',
+	'matBorderWidth',
+	'matBorderOpacity'
 ];
 
 function loadSettings() {
