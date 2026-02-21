@@ -6,15 +6,15 @@ let observers = [];
 const STORAGE_KEY = 'map-to-poster:settings';
 
 export const defaultState = {
-	city: "JAKARTA",
+	city: "BENGALURU",
 	cityOverride: "",
-	country: "INDONESIA",
+	country: "INDIA",
 	countryOverride: "",
 	cityFont: "'Playfair Display', serif",
 	countryFont: "'Outfit', sans-serif",
 	coordsFont: "'Outfit', sans-serif",
-	lat: -6.2088,
-	lon: 106.8456,
+	lat: 12.976791,
+	lon: 77.589912,
 	zoom: 12,
 	theme: "minimal",
 	width: 1080,
@@ -24,7 +24,7 @@ export const defaultState = {
 	overlaySize: 'medium',
 	showLabels: true,
 	renderMode: 'tile',
-	artisticTheme: 'arctic_frost',
+	artisticTheme: 'golden_era',
 	matEnabled: false,
 	matWidth: 40,
 	matShowBorder: true,
