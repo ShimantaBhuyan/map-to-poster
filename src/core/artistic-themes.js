@@ -385,7 +385,7 @@ export const artisticThemes = {
 		text: "#D1FAE5",
 		water: "#022C22",
 		parks: "#14532D",
-		road_motorway: "#FDE047", // Sunlight filtering through trees
+		road_motorway: "#FDE047", 
 		road_primary: "#A7F3D0",
 		road_secondary: "#34D399",
 		road_tertiary: "#10B981",
@@ -411,7 +411,7 @@ export const artisticThemes = {
 		description: "Dusty ochre and sun-scorched earth tones for desert landscapes",
 		bg: "#FFFBEB",
 		text: "#451A03",
-		water: "#EAB308", // Dried up riverbed look
+		water: "#EAB308",
 		parks: "#FEF3C7",
 		road_motorway: "#9A3412",
 		road_primary: "#C2410C",
