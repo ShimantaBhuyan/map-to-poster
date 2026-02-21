@@ -105,7 +105,7 @@ Follow these steps to get a local copy up and running.
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/dimartarmizi/map-to-poster.git
+   git clone https://github.com/ShimantaBhuyan/map-to-poster.git
    cd map-to-poster
    ```
 
@@ -133,9 +133,8 @@ Follow these steps to get a local copy up and running.
 3. **Draggable Overlay**: The city-label overlay is positioned with CSS `left`/`top` percentages and `translate(-50%, -50%)`. During drag and on every style update, the overlay's rendered `offsetWidth`/`offsetHeight` are read and used to clamp its position so it never bleeds outside the poster edges — providing a symmetric 8 px minimum gap on all four sides regardless of city name length.
 4. **Capture Logic**: High-fidelity exports are achieved by scaling the map containers to the target resolution before rendering with `html2canvas` or internal GL buffers. The `onclone` callback replicates all live-preview styles — including overlay position clamping, vignette type, and field visibility — into the cloned document before capture.
 
-## 📧 Contact
-
-If you have any questions, suggestions, or just want to reach out, feel free to contact me at [dimartarmizi@gmail.com](mailto:dimartarmizi@gmail.com).
+## Forked from
+This project has been forked from [dimartarmizi/map-to-poster](https://github.com/dimartarmizi/map-to-poster)
 
 ## ⚖️ License
 
