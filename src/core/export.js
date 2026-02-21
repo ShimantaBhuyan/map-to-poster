@@ -297,21 +297,15 @@ export async function exportToPNG(element, filename, statusElement, options = {}
 						vignette.style.pointerEvents = 'none';
 						vignette.style.zIndex = '5';
 
-					if (state.overlayBgType === 'vignette') {
-						vignette.style.display = 'block';
-						vignette.style.opacity = '1';
-						const colorSolid = hexToRgba(themeColor, 1);
-						const colorTrans = hexToRgba(themeColor, 0);
-						vignette.style.background = `linear-gradient(to bottom, ${colorSolid} 0%, ${colorSolid} 3%, ${colorTrans} 20%, ${colorTrans} 80%, ${colorSolid} 97%, ${colorSolid} 100%)`;
-					} else if (state.overlayBgType === 'radial') {
-						vignette.style.display = 'block';
-						vignette.style.opacity = '1';
-						const colorSolid = hexToRgba(themeColor, 0.95);
-						const colorTrans = hexToRgba(themeColor, 0);
-						vignette.style.background = `radial-gradient(ellipse at center, ${colorTrans} 30%, ${colorSolid} 100%)`;
-					} else {
-						vignette.style.display = 'none';
-					}
+				if (state.overlayBgType === 'vignette') {
+					vignette.style.display = 'block';
+					vignette.style.opacity = '1';
+					const colorSolid = hexToRgba(themeColor, 1);
+					const colorTrans = hexToRgba(themeColor, 0);
+					vignette.style.background = `linear-gradient(to bottom, ${colorSolid} 0%, ${colorSolid} 3%, ${colorTrans} 20%, ${colorTrans} 80%, ${colorSolid} 97%, ${colorSolid} 100%)`;
+				} else {
+					vignette.style.display = 'none';
+				}
 					}
 				}
 
@@ -328,7 +322,6 @@ export async function exportToPNG(element, filename, statusElement, options = {}
 					const overlayX = state.overlayX !== undefined ? state.overlayX : 0.5;
 					const overlayY = state.overlayY !== undefined ? state.overlayY : 0.85;
 
-					// Apply desired position then clamp to prevent edge overflow.
 					overlay.style.left = `${overlayX * 100}%`;
 					overlay.style.top = `${overlayY * 100}%`;
 					{

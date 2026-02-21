@@ -490,7 +490,6 @@ export function setupControls() {
 		});
 	}
 
-	// ── Label position presets ────────────────────────────────────────────────
 	const overlayPosBtns = document.querySelectorAll('.overlay-pos-btn');
 	overlayPosBtns.forEach(btn => {
 		btn.addEventListener('click', () => {
@@ -507,7 +506,6 @@ export function setupControls() {
 		});
 	}
 
-	// ── Draggable city-label overlay ─────────────────────────────────────────
 	const draggableOverlay = document.getElementById('poster-overlay');
 	const posterContainerForDrag = document.getElementById('poster-container');
 
@@ -535,9 +533,6 @@ export function setupControls() {
 			const dx = (clientX - dragStartClientX) / rect.width;
 			const dy = (clientY - dragStartClientY) / rect.height;
 
-			// Clamp to keep the overlay fully within the poster container.
-			// Use the overlay's actual rendered dimensions so clamping is
-			// symmetric: the same visual gap is preserved on all four sides.
 			const EDGE = 8;
 			const cW = posterContainerForDrag.offsetWidth;
 			const cH = posterContainerForDrag.offsetHeight;
@@ -924,12 +919,10 @@ export function updatePreviewStyles(currentState) {
 			overlay.style.maxWidth = '90%';
 			overlay.style.width = '';
 
-			// Apply desired position first, then clamp so overlay never bleeds
-			// outside the poster edges (overlay is often much wider than tall).
 			overlay.style.left = `${overlayX * 100}%`;
 			overlay.style.top = `${overlayY * 100}%`;
 			{
-				const EDGE = 8; // min px gap from any poster edge
+				const EDGE = 8; 
 				const cW = posterContainer.offsetWidth;
 				const cH = posterContainer.offsetHeight;
 				const oW = overlay.offsetWidth;
@@ -958,12 +951,6 @@ export function updatePreviewStyles(currentState) {
 					const colorSolid = hexToRgba(color, 1);
 					const colorTrans = hexToRgba(color, 0);
 					vignetteOverlay.style.background = `linear-gradient(to bottom, ${colorSolid} 0%, ${colorSolid} 3%, ${colorTrans} 20%, ${colorTrans} 80%, ${colorSolid} 97%, ${colorSolid} 100%)`;
-				} else if (bgType === 'radial') {
-					vignetteOverlay.style.display = '';
-					vignetteOverlay.style.opacity = '1';
-					const colorSolid = hexToRgba(color, 0.95);
-					const colorTrans = hexToRgba(color, 0);
-					vignetteOverlay.style.background = `radial-gradient(ellipse at center, ${colorTrans} 30%, ${colorSolid} 100%)`;
 				} else {
 					vignetteOverlay.style.display = 'none';
 				}
