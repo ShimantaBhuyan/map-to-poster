@@ -327,6 +327,23 @@ export function updateMapTheme(tileUrl) {
 	}
 }
 
+export function waitForMoveEnd(timeout = 3000) {
+	return new Promise((resolve) => {
+		if (!map) return resolve();
+
+		let resolved = false;
+		const done = () => {
+			if (resolved) return;
+			resolved = true;
+			clearTimeout(timer);
+			resolve();
+		};
+
+		map.once('moveend', done);
+		const timer = setTimeout(done, timeout);
+	});
+}
+
 export function waitForTilesLoad(timeout = 5000) {
 	return new Promise((resolve) => {
 		if (!map || !tileLayer) return resolve();

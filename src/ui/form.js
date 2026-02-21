@@ -8,7 +8,10 @@ import {
 	invalidateMapSize,
 	updateArtisticStyle,
 	updateMapTheme,
-	updateMarkerStyles
+	updateMarkerStyles,
+	waitForMoveEnd,
+	waitForTilesLoad,
+	waitForArtisticIdle
 } from '../map/map-init.js';
 import { searchLocation, formatCoords } from '../map/geocoder.js';
 
@@ -238,8 +241,10 @@ export function setupControls() {
 		}, 1000);
 	});
 
+	const mapLoadingOverlay = document.getElementById('map-loading-overlay');
+
 	let lastSelectionAt = 0;
-	function selectResultElement(item) {
+	async function selectResultElement(item) {
 		const lat = parseFloat(item.dataset.lat);
 		const lon = parseFloat(item.dataset.lon);
 		const name = item.dataset.name;
@@ -254,11 +259,24 @@ export function setupControls() {
 			markerLon: lon
 		});
 
-		updateMapPosition(lat, lon);
-
 		searchInput.value = name;
 		searchResults.classList.add('hidden');
 		lastSelectionAt = Date.now();
+
+		if (mapLoadingOverlay) mapLoadingOverlay.classList.remove('hidden');
+
+		try {
+			updateMapPosition(lat, lon);
+			await waitForMoveEnd(3000);
+
+			if (state.renderMode === 'artistic') {
+				await waitForArtisticIdle(6000);
+			} else {
+				await waitForTilesLoad(6000);
+			}
+		} finally {
+			if (mapLoadingOverlay) mapLoadingOverlay.classList.add('hidden');
+		}
 	}
 
 	searchResults.addEventListener('pointerdown', (e) => {
