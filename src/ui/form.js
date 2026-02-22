@@ -474,12 +474,97 @@ export function setupControls() {
 			return vals;
 		}
 
+		const AI_PROMPT_URL = 'https://chat.openai.com/?q=Generate%20an%20artistic%20theme%20for%20the%20aesthetic%20mentioned%20below%3A%0A%3Cyour%20prompt%20here%3E%0A%0ARespond%20in%20a%20valid%20javascript%20object%2C%20example%20below%3A%0A%7Bancient_woodland%3A%20%7Bname%3A%20%22Ancient%20Woodland%22%2Cdescription%3A%20%22Deep%20forest%20greens%20and%20mossy%20textures%20for%20a%20lush%20canopy%20feel%22%2Cbg%3A%20%22%23064E3B%22%2Ctext%3A%20%22%23D1FAE5%22%2Cwater%3A%20%22%23022C22%22%2Cparks%3A%20%22%2314532D%22%2Croad_motorway%3A%20%22%23FDE047%22%2C%20road_primary%3A%20%22%23A7F3D0%22%2Croad_secondary%3A%20%22%2334D399%22%2Croad_tertiary%3A%20%22%2310B981%22%2Croad_residential%3A%20%22%23065F46%22%2Croad_default%3A%20%22%2334D399%22%7D%7D'; // TODO: replace with actual ChatGPT prefilled prompt URL
+
+		function setAiFeedback(msg, isError = false) {
+			const el = document.getElementById('ct-ai-feedback');
+			if (!el) return;
+			el.textContent = msg;
+			el.className = `text-[11px] flex-1 min-w-0 ${msg ? (isError ? 'text-red-500' : 'text-emerald-600') : ''}`;
+		}
+
+		function parseAndFillAI(raw) {
+			const trimmed = (raw || '').trim();
+			if (!trimmed) { setAiFeedback(''); return; }
+
+			let parsed;
+			try {
+				// Use Function constructor to handle JS object literals
+				// (unquoted keys, trailing commas, single quotes, etc.)
+				parsed = new Function('"use strict"; return (' + trimmed + ')')();
+			} catch (e) {
+				setAiFeedback('Invalid syntax: ' + e.message.replace(/\n.*/s, ''), true);
+				return;
+			}
+
+			if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+				setAiFeedback('Expected a JS object. Make sure you paste the full object.', true);
+				return;
+			}
+
+			// Detect wrapped format: { someKey: { name: ..., bg: ... } }
+			let themeObj = parsed;
+			const topKeys = Object.keys(parsed);
+			if (topKeys.length === 1) {
+				const inner = parsed[topKeys[0]];
+				if (typeof inner === 'object' && inner !== null && !Array.isArray(inner)) {
+					const hasColorField = COLOR_FIELDS.some(f => inner[f.id]);
+					if (hasColorField || inner.name) themeObj = inner;
+				}
+			}
+
+			const filledFields = COLOR_FIELDS.filter(f => {
+				const val = themeObj[f.id];
+				return val && /^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(val);
+			});
+
+			if (filledFields.length === 0) {
+				setAiFeedback('No valid hex color fields found (expected fields like bg, text, water, etc.)', true);
+				return;
+			}
+
+			const nameIn = document.getElementById('ct-name');
+			const descIn = document.getElementById('ct-desc');
+
+			if (nameIn && themeObj.name && typeof themeObj.name === 'string') {
+				nameIn.value = themeObj.name.slice(0, 40);
+			}
+			if (descIn && themeObj.description && typeof themeObj.description === 'string') {
+				descIn.value = themeObj.description.slice(0, 100);
+			}
+
+			filledFields.forEach(f => syncColorField(f.id, themeObj[f.id]));
+
+			const missing = COLOR_FIELDS.filter(f => !themeObj[f.id]).map(f => f.label);
+			if (missing.length > 0) {
+				setAiFeedback(`✓ Filled ${filledFields.length}/${COLOR_FIELDS.length} fields. Missing: ${missing.join(', ')}`, false);
+			} else {
+				setAiFeedback(`✓ All ${COLOR_FIELDS.length} color fields filled successfully.`, false);
+			}
+		}
+
+		const aiGenerateLink = document.getElementById('ai-generate-link');
+		if (aiGenerateLink) aiGenerateLink.href = AI_PROMPT_URL;
+
+		const aiParseBtn = document.getElementById('ct-ai-parse');
+		const aiPasteArea = document.getElementById('ct-ai-paste');
+
+		if (aiParseBtn && aiPasteArea) {
+			aiParseBtn.addEventListener('click', () => parseAndFillAI(aiPasteArea.value));
+			aiPasteArea.addEventListener('paste', () => {
+				setTimeout(() => parseAndFillAI(aiPasteArea.value), 0);
+			});
+		}
+
 		function openModal() {
 			renderColorFields(DEFAULTS);
 			const nameIn = document.getElementById('ct-name');
 			const descIn = document.getElementById('ct-desc');
-			if (nameIn) { nameIn.value = ''; nameIn.classList.remove('border-red-400'); }
+			const aiPaste = document.getElementById('ct-ai-paste');
+			if (nameIn) { nameIn.value = ''; nameIn.classList.remove('border-red-400', 'ring-red-200', 'ring-2'); }
 			if (descIn) descIn.value = '';
+			if (aiPaste) aiPaste.value = '';
+			setAiFeedback('');
 			modal.classList.add('show');
 		}
 
