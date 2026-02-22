@@ -3,6 +3,7 @@ import { hexToRgba } from '../core/utils.js';
 import { artisticThemes } from '../core/artistic-themes.js';
 import { themes } from '../core/themes.js';
 import { outputPresets } from '../core/output-presets.js';
+import { loadCustomThemes, saveCustomTheme, deleteCustomTheme, generateThemeId } from '../core/custom-themes.js';
 import {
 	updateMapPosition,
 	invalidateMapSize,
@@ -42,30 +43,70 @@ export function setupControls() {
 		return candidates.map(c => c || '#cccccc').slice(0, 4);
 	};
 
-	if (artisticMainGrid) {
-		const mainKeys = ['cyber_noir', 'golden_era', 'mangrove_maze'];
+	const SPARKLE_SVG = `<svg class="w-3 h-3 text-amber-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L13.5 9.5L21 12L13.5 14.5L12 22L10.5 14.5L3 12L10.5 9.5L12 2Z"/></svg>`;
 
-		const makeCard = (key, theme, isOther = false) => {
-			const p = paletteFor(theme);
-			const label = theme && theme.name ? theme.name : (isOther ? 'Other Theme' : key);
-			return `
-				<button type="button" data-key="${key}" class="art-card group p-3 rounded-2xl border border-slate-100 bg-slate-50 flex flex-col items-center text-center hover:shadow-xl transition-all">
+	let currentGridKeys = [];
+
+	function renderArtisticGrid() {
+		if (!artisticMainGrid) return;
+		const customThemes = loadCustomThemes();
+		const builtInFeatured = ['cyber_noir', 'golden_era', 'mangrove_maze'];
+		const customToShow = customThemes.slice(0, 2);
+		const numCustom = customToShow.length;
+		const builtInToShow = builtInFeatured.slice(0, 3 - numCustom);
+
+		currentGridKeys = [
+			...customToShow.map(t => t.id),
+			...builtInToShow,
+		];
+
+		const moreDefaults = ['#6b7280', '#9ca3af', '#d1d5db', '#f3f4f6'];
+		let html = '';
+
+		customToShow.forEach(ct => {
+			const p = paletteFor(ct);
+			html += `
+				<button type="button" data-key="${ct.id}" class="art-card group p-3 rounded-2xl border border-slate-100 bg-slate-50 flex flex-col items-center text-center hover:shadow-xl transition-all">
 					<div class="flex items-center justify-center -space-x-2">
 						<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[0]}"></span>
 						<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[1]}"></span>
 						<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[2]}"></span>
 						<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[3]}"></span>
 					</div>
-					<div class="mt-3 text-[11px] font-semibold text-slate-900">${label}</div>
+					<div class="mt-3 text-[11px] font-semibold text-slate-900 flex items-center gap-1">${SPARKLE_SVG}<span class="truncate max-w-[80px]">${ct.name || 'Custom'}</span></div>
 				</button>
 			`;
-		};
+		});
 
-		const mainHtml = mainKeys.map(k => makeCard(k, artisticThemes[k] || {})).join('') + makeCard('other', { name: 'Other Theme' }, true);
-		artisticMainGrid.innerHTML = mainHtml;
+		builtInToShow.forEach(k => {
+			const t = artisticThemes[k] || {};
+			const p = paletteFor(t);
+			html += `
+				<button type="button" data-key="${k}" class="art-card group p-3 rounded-2xl border border-slate-100 bg-slate-50 flex flex-col items-center text-center hover:shadow-xl transition-all">
+					<div class="flex items-center justify-center -space-x-2">
+						<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[0]}"></span>
+						<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[1]}"></span>
+						<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[2]}"></span>
+						<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[3]}"></span>
+					</div>
+					<div class="mt-3 text-[11px] font-semibold text-slate-900">${t.name || k}</div>
+				</button>
+			`;
+		});
+
+		html += `
+			<button type="button" data-key="other" class="art-card group p-3 rounded-2xl border border-slate-100 bg-slate-50 flex flex-col items-center text-center hover:shadow-xl transition-all">
+				<div class="flex items-center justify-center -space-x-2">
+					${moreDefaults.map(c => `<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${c}"></span>`).join('')}
+				</div>
+				<div class="mt-3 text-[11px] font-semibold text-slate-900">More</div>
+			</button>
+		`;
+
+		artisticMainGrid.innerHTML = html;
 
 		artisticMainGrid.querySelectorAll('.art-card').forEach(btn => {
-			btn.addEventListener('click', (e) => {
+			btn.addEventListener('click', () => {
 				const k = btn.dataset.key;
 				if (k === 'other') {
 					const artModal = document.getElementById('artistic-modal');
@@ -83,6 +124,8 @@ export function setupControls() {
 			});
 		});
 	}
+
+	renderArtisticGrid();
 
 	if (themeSelect) {
 		themeSelect.innerHTML = Object.keys(themes)
@@ -202,33 +245,84 @@ export function setupControls() {
 
 	function populateArtisticModal() {
 		if (!artisticModalContent) return;
-		const mainKeys = new Set(['cyber_noir', 'golden_era', 'mangrove_maze']);
-		const itemsHtml = Object.entries(artisticThemes)
-			.filter(([k]) => !mainKeys.has(k))
-			.map(([key, t]) => {
-				const candidates = [t.road_motorway, t.road_primary, t.road_secondary, t.road_tertiary, t.text, t.bg];
-				const p = candidates.map(c => c || '#cccccc').slice(0, 4);
+		const gridBuiltInKeys = new Set(currentGridKeys.filter(k => !!artisticThemes[k]));
+		const customThemes = loadCustomThemes();
+
+		let sectionsHtml = '';
+
+		if (customThemes.length > 0) {
+			const customItemsHtml = customThemes.map(ct => {
+				const p = paletteFor(ct);
 				return `
-						<button class="artistic-modal-item group w-full flex items-center p-4 border border-slate-100 rounded-2xl hover:shadow-xl transition-all" data-key="${key}">
-							<div class="flex -space-x-2 mr-4">
+					<div class="custom-theme-item group flex items-center p-4 border border-slate-100 rounded-2xl hover:shadow-xl transition-all gap-2">
+						<button class="artistic-modal-item flex-1 flex items-center min-w-0 text-left" data-key="${ct.id}">
+							<div class="flex -space-x-2 mr-4 flex-shrink-0">
 								<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[0]}"></span>
 								<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[1]}"></span>
 								<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[2]}"></span>
 								<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[3]}"></span>
 							</div>
-							<div class="text-left">
-								<div class="text-sm font-semibold text-slate-900">${t.name || key}</div>
-								<div class="text-[10px] text-slate-400 mt-1">${t.description || ''}</div>
+							<div class="min-w-0">
+								<div class="text-sm font-semibold text-slate-900 flex items-center gap-1.5">${SPARKLE_SVG}<span class="truncate">${ct.name || 'Custom Theme'}</span></div>
+								<div class="text-[10px] text-slate-400 mt-0.5 truncate">${ct.description || 'Custom theme'}</div>
 							</div>
 						</button>
+						<button class="delete-custom-theme w-8 h-8 flex items-center justify-center rounded-xl text-slate-300 hover:bg-red-50 hover:text-red-400 transition-colors flex-shrink-0" data-custom-id="${ct.id}" title="Delete theme">
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+							</svg>
+						</button>
+					</div>
 				`;
-			}).join('\n');
+			}).join('');
+
+			sectionsHtml += `
+				<div id="custom-themes-section" class="mb-4">
+					<div class="flex items-center space-x-2 mb-3">
+						<div class="w-1 h-5 bg-amber-400 rounded-full"></div>
+						<h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Your Custom Themes</h3>
+					</div>
+					<div class="space-y-2" id="custom-themes-list">${customItemsHtml}</div>
+				</div>
+			`;
+		}
+
+		const builtInItemsHtml = Object.entries(artisticThemes)
+			.filter(([k]) => !gridBuiltInKeys.has(k))
+			.map(([key, t]) => {
+				const p = paletteFor(t);
+				return `
+					<button class="artistic-modal-item group w-full flex items-center p-4 border border-slate-100 rounded-2xl hover:shadow-xl transition-all" data-key="${key}">
+						<div class="flex -space-x-2 mr-4">
+							<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[0]}"></span>
+							<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[1]}"></span>
+							<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[2]}"></span>
+							<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[3]}"></span>
+						</div>
+						<div class="text-left">
+							<div class="text-sm font-semibold text-slate-900">${t.name || key}</div>
+							<div class="text-[10px] text-slate-400 mt-1">${t.description || ''}</div>
+						</div>
+					</button>
+				`;
+			}).join('');
+
+		sectionsHtml += `
+			<div id="builtin-themes-section">
+				${customThemes.length > 0 ? `
+				<div class="flex items-center space-x-2 mb-3">
+					<div class="w-1 h-5 bg-slate-300 rounded-full"></div>
+					<h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Built-in Themes</h3>
+				</div>` : ''}
+				<div class="space-y-2" id="builtin-themes-list">${builtInItemsHtml}</div>
+			</div>
+		`;
 
 		artisticModalContent.innerHTML = `
 			<div class="mb-4">
 				<input id="artistic-search" type="search" placeholder="Search themes..." class="w-full input-field" />
 			</div>
-			<div class="space-y-2">${itemsHtml}</div>
+			${sectionsHtml}
 		`;
 
 		artisticModalContent.querySelectorAll('.artistic-modal-item').forEach(btn => {
@@ -243,6 +337,24 @@ export function setupControls() {
 			});
 		});
 
+		artisticModalContent.querySelectorAll('.delete-custom-theme').forEach(btn => {
+			btn.addEventListener('click', (e) => {
+				e.stopPropagation();
+				const id = btn.dataset.customId;
+				if (confirm('Delete this custom theme?')) {
+					deleteCustomTheme(id);
+					if (state.artisticTheme === id) {
+						updateState({ artisticTheme: 'golden_era' });
+						if (state.renderMode === 'artistic') {
+							updateArtisticStyle(getSelectedArtisticTheme());
+						}
+					}
+					renderArtisticGrid();
+					populateArtisticModal();
+				}
+			});
+		});
+
 		const artSearch = document.getElementById('artistic-search');
 		let artSearchTimeout = null;
 		if (artSearch) {
@@ -252,12 +364,166 @@ export function setupControls() {
 				artSearchTimeout = setTimeout(() => {
 					artisticModalContent.querySelectorAll('.artistic-modal-item').forEach(it => {
 						const txt = (it.innerText || '').toLowerCase();
-						it.style.display = q ? (txt.indexOf(q) !== -1 ? '' : 'none') : '';
+						const wrapper = it.closest('.custom-theme-item') || it;
+						wrapper.style.display = q ? (txt.includes(q) ? '' : 'none') : '';
 					});
+					const customSection = document.getElementById('custom-themes-section');
+					if (customSection) {
+						const anyVisible = Array.from(customSection.querySelectorAll('.custom-theme-item')).some(el => el.style.display !== 'none');
+						customSection.style.display = q && !anyVisible ? 'none' : '';
+					}
 				}, 120);
 			});
 		}
 	}
+
+	function setupCustomThemeModal() {
+		const modal = document.getElementById('custom-theme-modal');
+		if (!modal) return;
+
+		const COLOR_FIELDS = [
+			{ id: 'bg', label: 'Background' },
+			{ id: 'text', label: 'Text / Overlay' },
+			{ id: 'water', label: 'Water' },
+			{ id: 'parks', label: 'Parks' },
+			{ id: 'road_motorway', label: 'Motorway' },
+			{ id: 'road_primary', label: 'Primary Road' },
+			{ id: 'road_secondary', label: 'Secondary Road' },
+			{ id: 'road_tertiary', label: 'Tertiary Road' },
+			{ id: 'road_residential', label: 'Residential' },
+			{ id: 'road_default', label: 'Default Road' },
+		];
+
+		const DEFAULTS = {
+			bg: '#0B0B16',
+			text: '#00E5E5',
+			water: '#071020',
+			parks: '#111122',
+			road_motorway: '#FF2AE6',
+			road_primary: '#00E5FF',
+			road_secondary: '#00BEBE',
+			road_tertiary: '#008F95',
+			road_residential: '#005E66',
+			road_default: '#008F95',
+		};
+
+		function updateCtPreview() {
+			const preview = document.getElementById('ct-preview');
+			const container = document.getElementById('ct-color-fields');
+			if (!preview || !container) return;
+			const vals = {};
+			container.querySelectorAll('.ct-color-picker').forEach(p => { vals[p.dataset.field] = p.value; });
+			const segments = [vals.bg, vals.road_primary, vals.road_secondary, vals.water, vals.parks, vals.text]
+				.map(c => c || '#cccccc');
+			preview.innerHTML = segments.map(c => `<div class="flex-1 h-full" style="background:${c}"></div>`).join('');
+		}
+
+		function syncColorField(field, val, skipHex = false) {
+			const container = document.getElementById('ct-color-fields');
+			if (!container) return;
+			const swatch = container.querySelector(`.ct-swatch[data-field="${field}"]`);
+			const picker = container.querySelector(`.ct-color-picker[data-field="${field}"]`);
+			const hexIn = container.querySelector(`.ct-hex-input[data-field="${field}"]`);
+			if (swatch) swatch.style.background = val;
+			if (picker) picker.value = val;
+			if (!skipHex && hexIn) hexIn.value = val;
+			updateCtPreview();
+		}
+
+		function renderColorFields(values) {
+			const container = document.getElementById('ct-color-fields');
+			if (!container) return;
+			container.innerHTML = COLOR_FIELDS.map(f => {
+				const val = values[f.id] || DEFAULTS[f.id] || '#000000';
+				return `
+					<div class="space-y-1.5">
+						<label class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">${f.label}</label>
+						<div class="flex items-center gap-2 p-2 bg-slate-50 rounded-xl border border-slate-100">
+							<label class="relative cursor-pointer flex-shrink-0" style="width:28px;height:28px">
+								<input type="color" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer ct-color-picker" data-field="${f.id}" value="${val}" />
+								<span class="block w-7 h-7 rounded-lg border border-black/10 shadow-sm ct-swatch" data-field="${f.id}" style="background:${val}"></span>
+							</label>
+							<input type="text" class="flex-1 bg-transparent text-[11px] font-mono text-slate-700 border-none focus:ring-0 p-0 outline-none uppercase ct-hex-input" data-field="${f.id}" value="${val}" maxlength="7" />
+						</div>
+					</div>
+				`;
+			}).join('');
+
+			container.querySelectorAll('.ct-color-picker').forEach(picker => {
+				picker.addEventListener('input', () => syncColorField(picker.dataset.field, picker.value));
+			});
+			container.querySelectorAll('.ct-hex-input').forEach(input => {
+				input.addEventListener('input', () => {
+					const val = input.value;
+					if (/^#[0-9a-fA-F]{6}$/.test(val)) syncColorField(input.dataset.field, val, true);
+				});
+				input.addEventListener('blur', () => {
+					if (!/^#[0-9a-fA-F]{6}$/.test(input.value)) {
+						const picker = document.querySelector(`.ct-color-picker[data-field="${input.dataset.field}"]`);
+						if (picker) input.value = picker.value;
+					}
+				});
+			});
+			updateCtPreview();
+		}
+
+		function getCurrentCtValues() {
+			const container = document.getElementById('ct-color-fields');
+			const vals = {};
+			if (container) container.querySelectorAll('.ct-color-picker').forEach(p => { vals[p.dataset.field] = p.value; });
+			return vals;
+		}
+
+		function openModal() {
+			renderColorFields(DEFAULTS);
+			const nameIn = document.getElementById('ct-name');
+			const descIn = document.getElementById('ct-desc');
+			if (nameIn) { nameIn.value = ''; nameIn.classList.remove('border-red-400'); }
+			if (descIn) descIn.value = '';
+			modal.classList.add('show');
+		}
+
+		const createBtn = document.getElementById('create-custom-theme-btn');
+		if (createBtn) createBtn.addEventListener('click', openModal);
+
+		const closeBtn = document.getElementById('close-custom-theme-modal');
+		const cancelBtn = document.getElementById('ct-cancel');
+		const overlayEl = document.getElementById('custom-theme-modal-overlay');
+		[closeBtn, cancelBtn, overlayEl].forEach(el => {
+			if (el) el.addEventListener('click', () => modal.classList.remove('show'));
+		});
+
+		const saveBtn = document.getElementById('ct-save');
+		if (saveBtn) {
+			saveBtn.addEventListener('click', () => {
+				const nameIn = document.getElementById('ct-name');
+				const descIn = document.getElementById('ct-desc');
+				const name = (nameIn ? nameIn.value.trim() : '');
+				if (!name) {
+					if (nameIn) {
+						nameIn.classList.add('border-red-400', 'ring-red-200', 'ring-2');
+						nameIn.focus();
+						setTimeout(() => nameIn.classList.remove('border-red-400', 'ring-red-200', 'ring-2'), 2500);
+					}
+					return;
+				}
+				const theme = {
+					id: generateThemeId(),
+					name,
+					description: (descIn ? descIn.value.trim() : ''),
+					isCustom: true,
+					...getCurrentCtValues(),
+				};
+				saveCustomTheme(theme);
+				updateState({ artisticTheme: theme.id });
+				if (state.renderMode === 'artistic') updateArtisticStyle(getSelectedArtisticTheme());
+				renderArtisticGrid();
+				modal.classList.remove('show');
+			});
+		}
+	}
+
+	setupCustomThemeModal();
 
 	function populateModal() {
 		if (!modalContent) return;
@@ -741,13 +1007,14 @@ export function setupControls() {
 
 		themeSelect.value = currentState.theme;
 		if (artisticMainGrid) {
-			const mainKeys = new Set(['cyber_noir', 'golden_era', 'mangrove_maze']);
+			const mainKeySet = new Set(currentGridKeys);
 			const selectedKey = currentState.artisticTheme;
+			const moreDefaults = ['#6b7280', '#9ca3af', '#d1d5db', '#f3f4f6'];
 			artisticMainGrid.querySelectorAll('.art-card').forEach(btn => {
 				const k = btn.dataset.key;
 				let active = false;
 				if (k === 'other') {
-					active = !!(selectedKey && !mainKeys.has(selectedKey));
+					active = !!(selectedKey && !mainKeySet.has(selectedKey));
 				} else {
 					active = k === selectedKey;
 				}
@@ -757,18 +1024,27 @@ export function setupControls() {
 
 				if (k === 'other') {
 					const spans = btn.querySelectorAll('span.w-6.h-6');
-					if (selectedKey && artisticThemes[selectedKey] && !mainKeys.has(selectedKey)) {
-						const p = paletteFor(artisticThemes[selectedKey]);
+					const builtIn = artisticThemes[selectedKey];
+					const customTheme = !builtIn ? loadCustomThemes().find(t => t.id === selectedKey) : null;
+					const activeTheme = builtIn || customTheme;
+					if (activeTheme && !mainKeySet.has(selectedKey)) {
+						const p = paletteFor(activeTheme);
 						spans.forEach((s, i) => { s.style.background = p[i] || '#cccccc'; });
 					} else {
-						spans.forEach((s) => { s.style.background = '#cccccc'; });
+						spans.forEach((s, i) => { s.style.background = moreDefaults[i]; });
 					}
 				}
 			});
 		}
 
 		const artisticTheme = getSelectedArtisticTheme();
-		artisticDesc.textContent = artisticTheme.description;
+		const selectedKey = currentState.artisticTheme;
+		const isInMainGrid = currentGridKeys.includes(selectedKey);
+		if (!isInMainGrid && artisticTheme.name) {
+			artisticDesc.innerHTML = `<span class="not-italic font-semibold text-slate-500">${artisticTheme.name}</span>${artisticTheme.description ? `<span class="mx-1 not-italic">·</span>${artisticTheme.description}` : ''}`;
+		} else {
+			artisticDesc.textContent = artisticTheme.description || '';
+		}
 
 		if (labelsToggle) labelsToggle.checked = !!currentState.showLabels;
 		if (overlayBgButtons && overlayBgButtons.length) {
