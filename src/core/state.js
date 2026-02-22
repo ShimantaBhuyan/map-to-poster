@@ -126,5 +126,5 @@ export function getSelectedTheme() {
 }
 
 export function getSelectedArtisticTheme() {
-	return artisticThemes[state.artisticTheme] || artisticThemes.arctic_frost;
+	return artisticThemes[state.artisticTheme] || artisticThemes.cyber_noir;
 }
