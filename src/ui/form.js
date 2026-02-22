@@ -8,10 +8,7 @@ import {
 	invalidateMapSize,
 	updateArtisticStyle,
 	updateMapTheme,
-	updateMarkerStyles,
-	waitForMoveEnd,
-	waitForTilesLoad,
-	waitForArtisticIdle
+	updateMarkerStyles
 } from '../map/map-init.js';
 import { searchLocation, formatCoords } from '../map/geocoder.js';
 
@@ -37,17 +34,54 @@ export function setupControls() {
 	const labelsControl = document.getElementById('labels-control');
 
 	const themeSelect = document.getElementById('theme-select');
-	const artisticThemeSelect = document.getElementById('artistic-theme-select');
+	const artisticMainGrid = document.getElementById('artistic-main-grid');
 	const artisticDesc = document.getElementById('artistic-desc');
 
-	if (artisticThemeSelect) {
-		artisticThemeSelect.innerHTML = Object.keys(artisticThemes)
-			.sort((a, b) => (artisticThemes[a].name || a).localeCompare(artisticThemes[b].name || b))
-			.map(key => {
-				const t = artisticThemes[key];
-				return `<option value="${key}">${t.name || key}</option>`;
-			})
-			.join('\n');
+	const paletteFor = (t) => {
+		const candidates = [t.road_motorway, t.road_primary, t.road_secondary, t.road_tertiary, t.text, t.bg];
+		return candidates.map(c => c || '#cccccc').slice(0, 4);
+	};
+
+	if (artisticMainGrid) {
+		const mainKeys = ['cyber_noir', 'golden_era', 'mangrove_maze'];
+
+		const makeCard = (key, theme, isOther = false) => {
+			const p = paletteFor(theme);
+			const label = theme && theme.name ? theme.name : (isOther ? 'Other Theme' : key);
+			return `
+				<button type="button" data-key="${key}" class="art-card group p-3 rounded-2xl border border-slate-100 bg-slate-50 flex flex-col items-center text-center hover:shadow-xl transition-all">
+					<div class="flex items-center justify-center -space-x-2">
+						<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[0]}"></span>
+						<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[1]}"></span>
+						<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[2]}"></span>
+						<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[3]}"></span>
+					</div>
+					<div class="mt-3 text-[11px] font-semibold text-slate-900">${label}</div>
+				</button>
+			`;
+		};
+
+		const mainHtml = mainKeys.map(k => makeCard(k, artisticThemes[k] || {})).join('') + makeCard('other', { name: 'Other Theme' }, true);
+		artisticMainGrid.innerHTML = mainHtml;
+
+		artisticMainGrid.querySelectorAll('.art-card').forEach(btn => {
+			btn.addEventListener('click', (e) => {
+				const k = btn.dataset.key;
+				if (k === 'other') {
+					const artModal = document.getElementById('artistic-modal');
+					if (artModal) {
+						artModal.classList.add('show');
+						populateArtisticModal();
+					}
+					return;
+				}
+				updateState({ artisticTheme: k });
+				if (state.renderMode === 'artistic') {
+					const theme = getSelectedArtisticTheme();
+					updateArtisticStyle(theme);
+				}
+			});
+		});
 	}
 
 	if (themeSelect) {
@@ -132,7 +166,6 @@ export function setupControls() {
 		});
 	}
 
-
 	const otherPresetsBtn = document.getElementById('other-presets-btn');
 	const presetsModal = document.getElementById('presets-modal');
 	const closeModal = document.getElementById('close-modal');
@@ -156,28 +189,107 @@ export function setupControls() {
 		}
 	});
 
+	const artisticModal = document.getElementById('artistic-modal');
+	const artisticModalContent = document.getElementById('artistic-modal-content');
+	const closeArtisticModal = document.getElementById('close-artistic-modal');
+	const closeArtisticModalBtn = document.getElementById('close-artistic-modal-btn');
+	const artisticModalOverlay = document.getElementById('artistic-modal-overlay');
+
+	const closeArtisticFuncs = [closeArtisticModal, closeArtisticModalBtn, artisticModalOverlay];
+	closeArtisticFuncs.forEach(el => {
+		if (el) el.addEventListener('click', () => { if (artisticModal) artisticModal.classList.remove('show'); });
+	});
+
+	function populateArtisticModal() {
+		if (!artisticModalContent) return;
+		const mainKeys = new Set(['cyber_noir', 'golden_era', 'mangrove_maze']);
+		const itemsHtml = Object.entries(artisticThemes)
+			.filter(([k]) => !mainKeys.has(k))
+			.map(([key, t]) => {
+				const candidates = [t.road_motorway, t.road_primary, t.road_secondary, t.road_tertiary, t.text, t.bg];
+				const p = candidates.map(c => c || '#cccccc').slice(0, 4);
+				return `
+						<button class="artistic-modal-item group w-full flex items-center p-4 border border-slate-100 rounded-2xl hover:shadow-xl transition-all" data-key="${key}">
+							<div class="flex -space-x-2 mr-4">
+								<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[0]}"></span>
+								<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[1]}"></span>
+								<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[2]}"></span>
+								<span class="w-6 h-6 rounded-full ring-1 ring-white" style="background:${p[3]}"></span>
+							</div>
+							<div class="text-left">
+								<div class="text-sm font-semibold text-slate-900">${t.name || key}</div>
+								<div class="text-[10px] text-slate-400 mt-1">${t.description || ''}</div>
+							</div>
+						</button>
+				`;
+			}).join('\n');
+
+		artisticModalContent.innerHTML = `
+			<div class="mb-4">
+				<input id="artistic-search" type="search" placeholder="Search themes..." class="w-full input-field" />
+			</div>
+			<div class="space-y-2">${itemsHtml}</div>
+		`;
+
+		artisticModalContent.querySelectorAll('.artistic-modal-item').forEach(btn => {
+			btn.addEventListener('click', () => {
+				const k = btn.dataset.key;
+				updateState({ artisticTheme: k });
+				if (state.renderMode === 'artistic') {
+					const theme = getSelectedArtisticTheme();
+					updateArtisticStyle(theme);
+				}
+				if (artisticModal) artisticModal.classList.remove('show');
+			});
+		});
+
+		const artSearch = document.getElementById('artistic-search');
+		let artSearchTimeout = null;
+		if (artSearch) {
+			artSearch.addEventListener('input', (e) => {
+				clearTimeout(artSearchTimeout);
+				const q = (e.target.value || '').trim().toLowerCase();
+				artSearchTimeout = setTimeout(() => {
+					artisticModalContent.querySelectorAll('.artistic-modal-item').forEach(it => {
+						const txt = (it.innerText || '').toLowerCase();
+						it.style.display = q ? (txt.indexOf(q) !== -1 ? '' : 'none') : '';
+					});
+				}, 120);
+			});
+		}
+	}
+
 	function populateModal() {
 		if (!modalContent) return;
-		modalContent.innerHTML = Object.entries(outputPresets).map(([key, presets]) => `
-      <div class="space-y-4">
+		const groupsHtml = Object.entries(outputPresets)
+			.filter(([key, presets]) => Array.isArray(presets) && presets.length > 0)
+			.map(([key, presets]) => `
+			<div class="space-y-4 preset-group">
         <div class="flex items-center space-x-3">
           <div class="w-1 h-5 bg-accent rounded-full"></div>
           <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">${key.replace('_', ' ')}</h3>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           ${presets.map(p => {
-			const isActive = state.width === p.width && state.height === p.height;
-			return `
+				const isActive = state.width === p.width && state.height === p.height;
+				return `
               <button class="modal-preset-btn group flex flex-col items-start p-4 border ${isActive ? 'border-accent bg-accent-light' : 'border-slate-100 bg-slate-50/50'} rounded-2xl hover:border-accent hover:bg-white hover:shadow-xl transition-all text-left" 
                       data-width="${p.width}" data-height="${p.height}">
                 <span class="text-[11px] font-bold ${isActive ? 'text-accent' : 'text-slate-800'} group-hover:text-accent transition-colors">${p.name}</span>
                 <span class="text-[9px] ${isActive ? 'text-accent/60' : 'text-slate-400'} font-bold mt-1 uppercase tracking-tight">${p.width} × ${p.height} px</span>
               </button>
             `;
-		}).join('')}
+			}).join('')}
         </div>
       </div>
     `).join('');
+
+		modalContent.innerHTML = `
+			<div class="mb-4">
+				<input id="preset-search" type="search" placeholder="Search sizes or preset names..." class="w-full input-field" />
+			</div>
+			<div class="space-y-6">${groupsHtml}</div>
+		`;
 
 		modalContent.querySelectorAll('.modal-preset-btn').forEach(btn => {
 			btn.addEventListener('click', () => {
@@ -187,6 +299,28 @@ export function setupControls() {
 				presetsModal.classList.remove('show');
 			});
 		});
+
+		const presetSearch = document.getElementById('preset-search');
+		let presetSearchTimeout = null;
+		if (presetSearch) {
+			presetSearch.addEventListener('input', (e) => {
+				clearTimeout(presetSearchTimeout);
+				const q = (e.target.value || '').trim().toLowerCase();
+				presetSearchTimeout = setTimeout(() => {
+					modalContent.querySelectorAll('.modal-preset-btn').forEach(btn => {
+						const txt = (btn.innerText || '').toLowerCase();
+						const dims = `${btn.dataset.width} ${btn.dataset.height}`;
+						const match = q ? (txt.indexOf(q) !== -1 || dims.indexOf(q) !== -1) : true;
+						btn.style.display = match ? '' : 'none';
+					});
+
+					modalContent.querySelectorAll('.preset-group').forEach(group => {
+						const anyVisible = Array.from(group.querySelectorAll('.modal-preset-btn')).some(b => b.style.display !== 'none');
+						group.style.display = anyVisible ? '' : 'none';
+					});
+				}, 120);
+			});
+		}
 	}
 
 	let searchTimeout;
@@ -241,10 +375,8 @@ export function setupControls() {
 		}, 1000);
 	});
 
-	const mapLoadingOverlay = document.getElementById('map-loading-overlay');
-
 	let lastSelectionAt = 0;
-	async function selectResultElement(item) {
+	function selectResultElement(item) {
 		const lat = parseFloat(item.dataset.lat);
 		const lon = parseFloat(item.dataset.lon);
 		const name = item.dataset.name;
@@ -259,24 +391,11 @@ export function setupControls() {
 			markerLon: lon
 		});
 
+		updateMapPosition(lat, lon);
+
 		searchInput.value = name;
 		searchResults.classList.add('hidden');
 		lastSelectionAt = Date.now();
-
-		if (mapLoadingOverlay) mapLoadingOverlay.classList.remove('hidden');
-
-		try {
-			updateMapPosition(lat, lon);
-			await waitForMoveEnd(3000);
-
-			if (state.renderMode === 'artistic') {
-				await waitForArtisticIdle(6000);
-			} else {
-				await waitForTilesLoad(6000);
-			}
-		} finally {
-			if (mapLoadingOverlay) mapLoadingOverlay.classList.add('hidden');
-		}
 	}
 
 	searchResults.addEventListener('pointerdown', (e) => {
@@ -407,13 +526,6 @@ export function setupControls() {
 		themeSelect.addEventListener('input', onThemeInput);
 	}
 
-	artisticThemeSelect.addEventListener('change', (e) => {
-		updateState({ artisticTheme: e.target.value });
-		if (state.renderMode === 'artistic') {
-			const theme = getSelectedArtisticTheme();
-			updateArtisticStyle(theme);
-		}
-	});
 
 	if (labelsToggle) {
 		labelsToggle.addEventListener('change', (e) => {
@@ -443,19 +555,7 @@ export function setupControls() {
 		overlaySizeButtons.forEach(btn => {
 			btn.addEventListener('click', (e) => {
 				const size = btn.dataset.size;
-				if (size === 'none') {
-					updateState({ overlaySize: size, overlayBgType: 'none' });
-					overlayBgButtons.forEach(b => {
-						b.disabled = true;
-						b.classList.add('opacity-50', 'pointer-events-none');
-					});
-				} else {
-					updateState({ overlaySize: size });
-					overlayBgButtons.forEach(b => {
-						b.disabled = false;
-						b.classList.remove('opacity-50', 'pointer-events-none');
-					});
-				}
+				updateState({ overlaySize: size });
 			});
 		});
 	}
@@ -490,6 +590,7 @@ export function setupControls() {
 	}
 
 	const overlayPosBtns = document.querySelectorAll('.overlay-pos-btn');
+	const overlayPositionGroup = document.getElementById('overlay-position-group');
 	overlayPosBtns.forEach(btn => {
 		btn.addEventListener('click', () => {
 			const x = parseFloat(btn.dataset.overlayX);
@@ -598,6 +699,10 @@ export function setupControls() {
 		const overlayPosBtnsSync = document.querySelectorAll('.overlay-pos-btn');
 		const curX = currentState.overlayX !== undefined ? currentState.overlayX : 0.5;
 		const curY = currentState.overlayY !== undefined ? currentState.overlayY : 0.85;
+
+		if (overlayPositionGroup) {
+			overlayPositionGroup.classList.toggle('hidden', (currentState.overlaySize || 'medium') === 'none');
+		}
 		const TOLERANCE = 0.02;
 		overlayPosBtnsSync.forEach(btn => {
 			const bx = parseFloat(btn.dataset.overlayX);
@@ -635,7 +740,32 @@ export function setupControls() {
 		}
 
 		themeSelect.value = currentState.theme;
-		artisticThemeSelect.value = currentState.artisticTheme;
+		if (artisticMainGrid) {
+			const mainKeys = new Set(['cyber_noir', 'golden_era', 'mangrove_maze']);
+			const selectedKey = currentState.artisticTheme;
+			artisticMainGrid.querySelectorAll('.art-card').forEach(btn => {
+				const k = btn.dataset.key;
+				let active = false;
+				if (k === 'other') {
+					active = !!(selectedKey && !mainKeys.has(selectedKey));
+				} else {
+					active = k === selectedKey;
+				}
+				btn.classList.toggle('border-accent', active);
+				btn.classList.toggle('bg-accent-light', active);
+				if (active) btn.classList.add('ring-accent'); else btn.classList.remove('ring-accent');
+
+				if (k === 'other') {
+					const spans = btn.querySelectorAll('span.w-6.h-6');
+					if (selectedKey && artisticThemes[selectedKey] && !mainKeys.has(selectedKey)) {
+						const p = paletteFor(artisticThemes[selectedKey]);
+						spans.forEach((s, i) => { s.style.background = p[i] || '#cccccc'; });
+					} else {
+						spans.forEach((s) => { s.style.background = '#cccccc'; });
+					}
+				}
+			});
+		}
 
 		const artisticTheme = getSelectedArtisticTheme();
 		artisticDesc.textContent = artisticTheme.description;
@@ -644,13 +774,6 @@ export function setupControls() {
 		if (overlayBgButtons && overlayBgButtons.length) {
 			overlayBgButtons.forEach(b => {
 				const style = b.dataset.bg;
-				if (currentState.overlaySize === 'none') {
-					b.disabled = true;
-					b.classList.add('opacity-50', 'pointer-events-none');
-				} else {
-					b.disabled = false;
-					b.classList.remove('opacity-50', 'pointer-events-none');
-				}
 				if (style === (currentState.overlayBgType || 'vignette')) {
 					b.classList.add('bg-accent', 'text-white');
 					b.classList.remove('bg-slate-50');
@@ -881,10 +1004,20 @@ export function updatePreviewStyles(currentState) {
 				overlayBg.style.backdropFilter = '';
 				overlayBg.style.webkitBackdropFilter = '';
 			}
+			const bgTypeNone = currentState.overlayBgType || 'vignette';
+			const colorNone = activeTheme.background || activeTheme.bg || activeTheme.overlayBg || '#ffffff';
 			if (vignetteOverlay) {
-				vignetteOverlay.style.display = 'none';
-				vignetteOverlay.style.opacity = '0';
-				vignetteOverlay.style.background = '';
+				if (bgTypeNone === 'vignette') {
+					vignetteOverlay.style.display = '';
+					vignetteOverlay.style.opacity = '1';
+					const colorSolid = hexToRgba(colorNone, 1);
+					const colorTrans = hexToRgba(colorNone, 0);
+					vignetteOverlay.style.background = `linear-gradient(to bottom, ${colorSolid} 0%, ${colorSolid} 3%, ${colorTrans} 20%, ${colorTrans} 80%, ${colorSolid} 97%, ${colorSolid} 100%)`;
+				} else {
+					vignetteOverlay.style.display = 'none';
+					vignetteOverlay.style.opacity = '0';
+					vignetteOverlay.style.background = '';
+				}
 			}
 		} else {
 			overlay.style.display = '';
@@ -918,10 +1051,10 @@ export function updatePreviewStyles(currentState) {
 			overlay.style.maxWidth = '90%';
 			overlay.style.width = '';
 
-		overlay.style.left = `${overlayX * 100}%`;
-		overlay.style.top = `${overlayY * 100}%`;
-		{
-			const EDGE = 8; 
+			overlay.style.left = `${overlayX * 100}%`;
+			overlay.style.top = `${overlayY * 100}%`;
+			{
+				const EDGE = 8;
 				const cW = posterContainer.offsetWidth;
 				const cH = posterContainer.offsetHeight;
 				const oW = overlay.offsetWidth;
@@ -949,8 +1082,8 @@ export function updatePreviewStyles(currentState) {
 					vignetteOverlay.style.opacity = '1';
 					const colorSolid = hexToRgba(color, 1);
 					const colorTrans = hexToRgba(color, 0);
-				vignetteOverlay.style.background = `linear-gradient(to bottom, ${colorSolid} 0%, ${colorSolid} 3%, ${colorTrans} 20%, ${colorTrans} 80%, ${colorSolid} 97%, ${colorSolid} 100%)`;
-			} else {
+					vignetteOverlay.style.background = `linear-gradient(to bottom, ${colorSolid} 0%, ${colorSolid} 3%, ${colorTrans} 20%, ${colorTrans} 80%, ${colorSolid} 97%, ${colorSolid} 100%)`;
+				} else {
 					vignetteOverlay.style.display = 'none';
 				}
 			}
