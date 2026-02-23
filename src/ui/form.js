@@ -483,8 +483,14 @@ export function setupControls() {
 			el.className = `text-[11px] flex-1 min-w-0 ${msg ? (isError ? 'text-red-500' : 'text-emerald-600') : ''}`;
 		}
 
+		function normalizeQuotes(str) {
+			return str
+				.replace(/[\u201C\u201D\u201E\u201F\u275D\u275E]/g, '"') // curly double quotes → "
+				.replace(/[\u2018\u2019\u201A\u201B\u275B\u275C]/g, "'"); // curly single quotes → '
+		}
+
 		function parseAndFillAI(raw) {
-			const trimmed = (raw || '').trim();
+			const trimmed = normalizeQuotes((raw || '').trim());
 			if (!trimmed) { setAiFeedback(''); return; }
 
 			let parsed;
