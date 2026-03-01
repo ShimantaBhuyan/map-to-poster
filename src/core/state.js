@@ -32,10 +32,18 @@ export const defaultState = {
 	matBorderWidth: 1,
 	matBorderOpacity: 1,
 	showMarker: false,
-	markerLat: -6.2088,
-	markerLon: 106.8456,
+	markers: [
+		{ lat: -6.2088, lon: 106.8456 }
+	],
 	markerIcon: 'pin',
 	markerSize: 1,
+	showRoute: false,
+	routeStartLat: -6.2088,
+	routeStartLon: 106.8456,
+	routeEndLat: -6.2150,
+	routeEndLon: 106.8550,
+	routeGeometry: [],
+	routeViaPoints: [],
 	overlayX: 0.5,
 	overlayY: 0.85,
 	showCountry: true,
@@ -69,10 +77,15 @@ const SAVED_KEYS = [
 	'matBorderWidth',
 	'matBorderOpacity',
 	'showMarker',
-	'markerLat',
-	'markerLon',
+	'markers',
 	'markerIcon',
 	'markerSize',
+	'showRoute',
+	'routeStartLat',
+	'routeStartLon',
+	'routeEndLat',
+	'routeEndLon',
+	'routeViaPoints',
 	'overlayX',
 	'overlayY',
 	'showCountry',
@@ -88,6 +101,10 @@ function loadSettings() {
 		const toApply = {};
 		for (const k of SAVED_KEYS) {
 			if (k in parsed) toApply[k] = parsed[k];
+		}
+		// Migrate markerLat/markerLon to markers array for backward compatibility
+		if (!toApply.markers && ('markerLat' in parsed || 'markerLon' in parsed)) {
+			toApply.markers = [{ lat: parsed.markerLat ?? -6.2088, lon: parsed.markerLon ?? 106.8456 }];
 		}
 		Object.assign(state, toApply);
 	} catch (e) {
